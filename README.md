@@ -25,7 +25,7 @@ Template variables are explicitly at the top of the model using the escape strin
 
 Below is a representation in templates of the 36 methylation reactions in required by the Spiro model. 
 
-  <p>#! SbStar v1.0 {‘p’:[‘p’,‘’], ‘l’:[‘L’,‘’], ‘r’:[‘R’,‘’], \ </p>
+  <p>#! SbStar Version 1.0 {‘p’:[‘p’,‘’], ‘l’:[‘L’,‘’], ‘r’:[‘R’,‘’], \ </p>
 
   ‘m’:[‘2’, ‘3’, ‘4’]}
  

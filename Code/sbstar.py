@@ -1,4 +1,218 @@
 '''Class for processing templates. See README for syntax.'''
 
+
+ESCAPE_STG = '#!'
+PROCESSOR_NAME = "SbStar"
+VERSION = '1.0'
+SPLIT_STG = "\n"
+COMMENT_STG = "#"
+CONTINUED_STG = "\\"  # Indicates a continuation follows
+VARIABLE_START = "{"
+VARIABLE_END = "}"
+LINE_TRAN = 1  # Transparent - nothing to process (comment line, no template variable)
+LINE_DEFN = 2  # Variable definition - variable definition line
+LINE_SUBS = 3  # Substitution line
+TOKEN_ESCAPE = 0
+TOKEN_PROCESSOR = 1
+TOKEN_VERSION = 3
+TOKEN_DEFSTART = 4
+
+
+class Substituter(object):
+  """
+  This class makes string substitutions for a set of targets and
+  replacement values. Multiple instances of replacement values are
+  considered for each target.
+  """
+
+  def __init__(self, substitution_list):
+    """
+    :param list-of-dict substitution_list: List of dictionaries in which the 
+         key is the target and the value is its replacement
+    """
+    self._substitution_list = substitution_list
+
+  @classmethod
+  def makeSubstitutionList(cls, definitions,
+      left_delim=VARIABLE_START,
+      right_delim=VARIABLE_END):
+    """
+    Creates a list of substitutions from a substitution defintion.
+    Suppose that the defintions are the dictionary 
+    {'a': ['a1', 'a2'], 'b': ['b1', 'b2', 'b3']}.
+    Then a substituion list will be a list of dictionaries, each of which
+    has a key for the two targets ('a' and 'b') and every combination of
+    value for the keys. Assume the default left and right delimiters. In this case:
+      [ {'{a}': 'a1', '{b}': 'b1'}, ['{a}': 'a2', '{b}': 'b1'},
+        {'{a}': 'a1', '{b}': 'b2'}, ['{a}': 'a2', '{b}': 'b2'},
+        {'{a}': 'a1', '{b}': 'b3'}, ['{a}': 'a2', '{b}': 'b3'}
+      ]
+    :param dict definitions: key is target name, value is list of replacements
+    :param str left_delim: left delimiter for target
+    :param str right_delim: right delimiter for target
+    :return list-of-dict:
+    """
+    substitution_list = [{}]
+    for key in definitions.keys():
+      new_list = []
+      for val in definitions[key]:
+        # Create an substituion instance for this key and value
+        tgt = "%s%s%s" % (left_delim, str(key), right_delim)
+        import pdb; pdb.set_trace()
+        adds = [d.update({tgt: val}) for d in substitution_list]
+        new_list.extend(adds)
+      substitution_list = new_list
+    return substitution_list
+
+  def replace(self, line):
+    """
+    Replaces all instances of target strings in the line,
+    eliminating redundant lines.
+    :param str line:
+    :return list-of-str:
+    """
+    replacements = []
+    for substitution_dict in self._substitution_list:
+      replaced_string = line
+      for target in substitution_dict.keys():
+        new_string = replaced_string.replace(target, self._substitutions[target])
+        if new_string != replaced_string:
+          replaced_string = new_string
+          replacements.append(replaced_string)
+    return replacements
+
+
 class Sbstar(object):
-  pass
+  """
+  This class processes an Antimony model written using template variable substitutions.
+  See the project README for syntax details.
+  Usage:
+    import tellurium as te
+    sbstar = Sbstar(template_string)
+    expanded_string = sbstar.expand()
+    rr = te.loada(expanded_string)
+    results = rr.simulate(start, end, samples)
+  """
+
+  def __init__(self, template_string):
+    self._template_string = template_string
+    self._lines = self._template_string.split(SPLIT_STG)
+    self._definitions = {}  # Dictionary of template variables and values
+    self._substitutions = []  # List of dictionaries of substitutions
+    self._lineno = -1
+    self._current_line = None  # Complete line extracted from input
+
+  def _classifyLine(self):
+    """
+    Classifies a line as:
+      LINE_TRAN: Transparent - nothing to process (comment line, no template variable)
+      LINE_DEFN: Variable definition - variable definition line
+      LINE_SUBS: Substitution line
+    :return int: see LINE_* for interpretation
+    """
+    text = self._current_line.strip()
+    if text[0] == COMMENT_STG or len(text) == 0:
+      result = LINE_TRAN
+    if text.count(VARIABLE_START) == 0 and  \
+        text.count(VARIABLE_END) == 0:
+      result = LINE_TRAN
+    elif text[0:len(ESCAPE_STG)] == ESCAPE_STG:
+      result = LINE_DEFN
+    else:
+      result = LINE_SUBS
+    return result
+
+  def _errorMsg(self, msg):
+    """
+    :param str msg:
+    :raises ValueError: 
+    """
+    error = "%s at line number %d" % (msg, self._lineno)
+    raise ValueError(error)
+
+  def _getNextLine(self):
+    """
+    Gets the next line, handling continued lines.
+    :sideeffects: self._current_line, self._lineno
+    :return str: Current line with continuations
+    """
+    self._current_line = None
+    while self._lineno + 1 < len(self._lines):
+      if self._current_line is None:
+        self._current_line = ""
+      self._lineno += 1
+      line = self._lines[self._lineno]
+      text = line.strip()
+      if text[-1] == CONTINUED_STG:
+        self._current_line = self._current_line + text[0:-1]
+      else:
+        self._current_line = self._current_line + text
+        break
+    return self._current_line
+
+  def _makeVariableDefinitions(self):
+    """
+    Extract the variable definitions from the input.
+    :sideeffects self._definitions:
+    """
+    tokens = self._current_line.split('')
+    if tokens[TOKEN_ESCAPE] != ESCAPE_STG:
+      raise RuntimeError("Not a variable definition line.")
+    if tokens[TOKEN_PROCESSOR] != PROCESSOR_NAME:
+      self._errorMsg("Could not find template processor")
+    version = tokens[TOEKN_VERSION]
+    try:
+      if float(version) > float(VERSION):
+        self._errorMsg("Version number not recognized")     
+    except Exception:
+      self._errorMsg("Version number not recognized")
+    # Valid Variable Definitions line
+    definitions = " ".join(tokens[TOEKN_DEFSTART:])
+    try:
+      self._definitions = eval(definitions)
+    except:
+      self._errorMsg("Invalid variable definitions.")
+
+  def _makeComment(self, line):
+    return "%s%s" % (COMMENT_STG, line)
+      
+  def expand(self):
+    """
+    Processes the template string and returns the expanded lines for input
+    to road runner.
+    Phases
+      1. Construct content lines (non-blank, not comments)
+      2. Extract the template variable definitions
+      3. Construct the substitution instances
+      4. Process the lines with template variables
+    :return str expanded_string:
+    :raises ValueError: errors encountered in the template string
+    """
+    expansions = []
+    substituter = None
+    line = ""
+    while line is not None:  # End of input if None
+      line = self._getNextLine()
+      line_type = self._classifyLine(line)
+      if line_type == LINE_TRAN:
+        expansions.append(line)
+      elif line_type == LINE_DEFN:
+        # Process definitions of template variables
+        expansions.append(self._makeComment(line.strip()))
+        self._makeVariableDefinitions()
+        substitutions = Substituter.makeSubstitionList(self._definitions)
+        substituter = Substituter(substitutions)
+      else:
+        if substituter is None:
+          msg = "Substituion encountered before definition of template variables."
+          self._errorMsg(msg)
+        # Do the variable substitutions
+        expansion = substituter.expand(line)
+        is_ok = [False if (VARIABLE_START in e) or (VARIABLE_END in e)
+                 else True for e in expansion]
+        if not is_ok:
+          self._errorMsg("Undefined template variable in line.")
+        if len(expansion) > 1:
+          expansions.append(self._makeComment(line))
+        expansions.extend(expansion)
+    return "\n".join(expansions)
