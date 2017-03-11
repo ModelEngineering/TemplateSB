@@ -25,12 +25,12 @@ class Substituter(object):
   considered for each target.
   """
 
-  def __init__(self, substitution_list):
+  def __init__(self, substitutions):
     """
-    :param list-of-dict substitution_list: List of dictionaries in which the 
+    :param list-of-dict substitutions: List of dictionaries in which the 
          key is the target and the value is its replacement
     """
-    self._substitution_list = substitution_list
+    self._substitutions = substitutions
 
   @classmethod
   def makeSubstitutionList(cls, definitions,
@@ -52,33 +52,35 @@ class Substituter(object):
     :param str right_delim: right delimiter for target
     :return list-of-dict:
     """
-    substitution_list = [{}]
+    substitutions = [{}]
     for key in definitions.keys():
-      new_list = []
+      accum_list = []
       for val in definitions[key]:
         # Create an substituion instance for this key and value
+        new_list = [dict(d) for d in substitutions]
         tgt = "%s%s%s" % (left_delim, str(key), right_delim)
-        import pdb; pdb.set_trace()
-        adds = [d.update({tgt: val}) for d in substitution_list]
-        new_list.extend(adds)
-      substitution_list = new_list
-    return substitution_list
+        [d.update({tgt: val}) for d in new_list]
+        accum_list.extend(new_list)
+      substitutions = list(accum_list)
+    return [d for d in substitutions if len(d.keys()) > 0]
 
-  def replace(self, line):
+  def replace(self, stg):
     """
     Replaces all instances of target strings in the line,
     eliminating redundant lines.
-    :param str line:
+    :param str stg: string where replacements are done
     :return list-of-str:
     """
     replacements = []
-    for substitution_dict in self._substitution_list:
-      replaced_string = line
-      for target in substitution_dict.keys():
-        new_string = replaced_string.replace(target, self._substitutions[target])
-        if new_string != replaced_string:
-          replaced_string = new_string
-          replacements.append(replaced_string)
+    for substitution_dict in self._substitutions:
+      replaced_string = stg
+      for target, replc in substitution_dict.items():
+        new_string = replaced_string.replace(target, replc)
+        replaced_string = new_string
+      if not replaced_string in replacements:
+        replacements.append(replaced_string)
+    if len(replacements) == 0:
+      replacements.append(stg)
     return replacements
 
 
