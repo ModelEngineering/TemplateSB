@@ -23,19 +23,20 @@ For example, reaction J1 is realized by assigning '' (the null string) to both l
 
 Template variables are explicitly at the top of the model using the escape string “#!”. The declaration has the syntax of a python dictionary. A line is continued if it ends with a backslash (“\”).
 
-Below is a representation in templates of the 36 methylation reactions in required by the Spiro model. 
+Below is a representation in templates of the 64 methylation reactions (24 reactions for each of
+J1* and J2* and 8 reactions for each of J3*2* and J3*3*) in required by the Spiro model. 
 
   <p>#! SbStar Version 1.0 {‘p’:[‘p’,‘’], ‘l’:[‘L’,‘’], ‘r’:[‘R’,‘’], \ </p>
 
   ‘m’:[‘2’, ‘3’, ‘4’]}
  
-  J1{l}{m}{p}: {l}T{m}{p} + R -> {l}T{m}{p}R; k1{m} * {l}T{m}{p} * R
+  J1{l}{m}{p}: {l}T{m}{p} + R -> {l}T{m}{p}R; k1{m} \* {l}T{m}{p} \* R
   
-  J2{l}{m}{p}: {l}T{m}{p}R -> {l}T{m}{p} + R; k2{m} * {l}T{m}{p}R
+  J2{l}{m}{p}: {l}T{m}{p}R -> {l}T{m}{p} + R; k2{m} \* {l}T{m}{p}R
   
-  J3{l}2{p}: {l}T2{p}R -> {l}T3{p} + R; k32 * {l}T2{p}R
+  J3{l}2{p}: {l}T2{p}R -> {l}T3{p} + R; k32 \* {l}T2{p}R
   
-  J3{l}3{p}: {l}T3{p}R -> {l}T4{p} + R; k33 * {l}T3{p}R
+  J3{l}3{p}: {l}T3{p}R -> {l}T4{p} + R; k33 \* {l}T3{p}R
 
 One possible extension is to permit having a python expression inside a template instance (within “{“ and “}”). This feature would eliminate one of the templated model lines in the above model by using {m+1} as a template instance.
 
