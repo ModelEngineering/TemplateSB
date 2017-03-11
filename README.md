@@ -5,13 +5,13 @@ The motivation for SbStar is as follows. Often, realistic kinetics models requir
 
 Fortunately, the set of reactions can often be simplified due to independence assumptions used in the model. To illustrate this, consider a part of the chemotaxis model in Spiro (PNAS, 1997). We focus on receptor methylation. The state of a receptor is determined by three factors: whether or not it is bound to a ligand; whether or not it is phosphorylated; and its methylation level. Methylation may occur once a receptor (in any state) is bound to CheR (herein denoted by R). The reactions for a methylation level of 2 are:
 
-  J1: T2R -> T3 + R; k2\*R\*T2
+  J1: T2R -> T3 + R; k2\*T2R
   
-  J2: LT2R -> LT3 + R; k2*LT2R
+  J2: LT2R -> LT3 + R; k2\*LT2R
   
-  J3: T2pR -> T3p + R; k2*T2pR
+  J3: T2pR -> T3p + R; k2\*T2pR
   
-  J4: LT2pR -> LT3p + R; k2*LT2pR
+  J4: LT2pR -> LT3p + R; k2\*LT2pR
   
 Note that the reactions are independent of phosphorylation and ligand binding in that the kinetics constants do not change with these receptor states. To represent the complete set of methylation reactions in the Spiro model, we’d consider methylation levels of 3 and 4 as well, resulting in 12 reactions.
 
