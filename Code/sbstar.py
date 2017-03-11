@@ -84,7 +84,7 @@ class Substituter(object):
     return replacements
 
 
-class Sbstar(object):
+class SbStar(object):
   """
   This class processes an Antimony model written using template variable substitutions.
   See the project README for syntax details.
@@ -99,9 +99,10 @@ class Sbstar(object):
   def __init__(self, template_string):
     self._template_string = template_string
     self._lines = self._template_string.split(SPLIT_STG)
+    self._lines.reverse()
     self._definitions = {}  # Dictionary of template variables and values
     self._substitutions = []  # List of dictionaries of substitutions
-    self._lineno = -1
+    self._lineno = 0
     self._current_line = None  # Complete line extracted from input
 
   def _classifyLine(self):
@@ -113,13 +114,13 @@ class Sbstar(object):
     :return int: see LINE_* for interpretation
     """
     text = self._current_line.strip()
-    if text[0] == COMMENT_STG or len(text) == 0:
+    if text[0:len(ESCAPE_STG)] == ESCAPE_STG:
+      result = LINE_DEFN
+    elif text[0] == COMMENT_STG or len(text) == 0:
       result = LINE_TRAN
-    if text.count(VARIABLE_START) == 0 and  \
+    elif text.count(VARIABLE_START) == 0 and  \
         text.count(VARIABLE_END) == 0:
       result = LINE_TRAN
-    elif text[0:len(ESCAPE_STG)] == ESCAPE_STG:
-      result = LINE_DEFN
     else:
       result = LINE_SUBS
     return result
@@ -138,13 +139,13 @@ class Sbstar(object):
     :sideeffects: self._current_line, self._lineno
     :return str: Current line with continuations
     """
-    self._current_line = None
-    while self._lineno + 1 < len(self._lines):
-      if self._current_line is None:
-        self._current_line = ""
+    self._current_line = ""
+    while self._lineno < len(self._lines):
+      text = self._lines[self._lineno].strip()
       self._lineno += 1
-      line = self._lines[self._lineno]
-      text = line.strip()
+      if len(text) == 0:
+        continue
+      import pdb; pdb.set_trace()
       if text[-1] == CONTINUED_STG:
         self._current_line = self._current_line + text[0:-1]
       else:
