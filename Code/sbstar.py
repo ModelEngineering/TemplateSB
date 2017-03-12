@@ -99,7 +99,6 @@ class SbStar(object):
   def __init__(self, template_string):
     self._template_string = template_string
     self._lines = self._template_string.split(SPLIT_STG)
-    self._lines.reverse()
     self._definitions = {}  # Dictionary of template variables and values
     self._substitutions = []  # List of dictionaries of substitutions
     self._lineno = 0
@@ -116,7 +115,9 @@ class SbStar(object):
     :return int: see LINE_* for interpretation
     """
     text = self._current_line.strip()
-    if text[0:len(ESCAPE_STG)] == ESCAPE_STG:
+    if len(text) == 0:
+      result = LINE_TRAN
+    elif text[0:len(ESCAPE_STG)] == ESCAPE_STG:
       result = LINE_DEFN
     elif text[0] == COMMENT_STG or len(text) == 0:
       result = LINE_TRAN
@@ -132,7 +133,7 @@ class SbStar(object):
     :param str msg:
     :raises ValueError: 
     """
-    error = "%s at line number %d" % (msg, self._lineno)
+    error = "on line %d. %s" % (self._lineno, msg)
     raise ValueError(error)
 
   def _getNextLine(self):
@@ -167,19 +168,19 @@ class SbStar(object):
       writes: _definitions
     :sideeffects self._definitions:
     """
-    tokens = self._current_line.split('')
+    tokens = self._current_line.split(' ')
     if tokens[TOKEN_ESCAPE] != ESCAPE_STG:
       raise RuntimeError("Not a variable definition line.")
     if tokens[TOKEN_PROCESSOR] != PROCESSOR_NAME:
       self._errorMsg("Could not find template processor")
-    version = tokens[TOEKN_VERSION]
+    version = tokens[TOKEN_VERSION]
     try:
       if float(version) > float(VERSION):
         self._errorMsg("Version number not recognized")     
     except Exception:
       self._errorMsg("Version number not recognized")
     # Valid Variable Definitions line
-    definitions = " ".join(tokens[TOEKN_DEFSTART:])
+    definitions = " ".join(tokens[TOKEN_DEFSTART:])
     try:
       self._definitions = eval(definitions)
     except:
@@ -204,29 +205,30 @@ class SbStar(object):
     """
     expansions = []
     substituter = None
-    line = ""
+    line = self._getNextLine()
     while line is not None:  # End of input if None
-      line = self._getNextLine()
-      line_type = self._classifyLine(line)
+      line_type = self._classifyLine()
       if line_type == LINE_TRAN:
         expansions.append(line)
       elif line_type == LINE_DEFN:
         # Process definitions of template variables
         expansions.append(self._makeComment(line.strip()))
         self._makeVariableDefinitions()
-        substitutions = Substituter.makeSubstitionList(self._definitions)
+        substitutions = Substituter.makeSubstitutionList(self._definitions)
         substituter = Substituter(substitutions)
       else:
         if substituter is None:
-          msg = "Substituion encountered before definition of template variables."
+          msg = "Substitution encountered before definition of template variables."
           self._errorMsg(msg)
         # Do the variable substitutions
-        expansion = substituter.expand(line)
-        is_ok = [False if (VARIABLE_START in e) or (VARIABLE_END in e)
-                 else True for e in expansion]
+        expansion = substituter.replace(line)
+        is_ok = all([False if (VARIABLE_START in e) 
+                     or (VARIABLE_END in e)
+                     else True for e in expansion])
         if not is_ok:
           self._errorMsg("Undefined template variable in line.")
         if len(expansion) > 1:
           expansions.append(self._makeComment(line))
         expansions.extend(expansion)
+      line = self._getNextLine()
     return "\n".join(expansions)

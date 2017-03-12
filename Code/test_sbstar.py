@@ -4,8 +4,8 @@ from sbstar import SbStar, PROCESSOR_NAME, Substituter, LINE_TRAN,  \
     LINE_DEFN, COMMENT_STG, ESCAPE_STG, LINE_SUBS
 
 
-IGNORE_TEST = False
-DEFINITIONS = {'a': ['A', 'a'], 'm': ['1', '2', '3']}
+IGNORE_TEST = True
+DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3']}
 DEFINITIONS_LINE =  "%s %s Version 1.0 %s" %  \
     (ESCAPE_STG, PROCESSOR_NAME, str(DEFINITIONS))
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
@@ -15,21 +15,17 @@ TEMPLATE_STG1 = '''
 # No substitution
 %s
 ''' % (DEFINITIONS_LINE, SUBSTITUTION1)
-TEMPLATE_STG2 = '''
-%s
+TEMPLATE_STG2 = '''%s
 # Substitution
-%s''' % (SUBSTITUTION2, DEFINITIONS_LINE)
+%s''' % (DEFINITIONS_LINE, SUBSTITUTION2)
 TEMPLATE_STG3 = '''
-%s
 # Missing template variable definition
 J{c}1: S{c}1 -> S{c}2; k1*S{c}1
-''' % DEFINITIONS_LINE
-TEMPLATE_STG4 = '''
-%s
-# Substitution  \
-more of the comment
-%s
-''' % (SUBSTITUTION2, DEFINITIONS_LINE)
+'''
+TEMPLATE_STG4 = '''%s
+# Substitution error
+SUBSTITUTION2 = "J{d}1: S{d}1 -> S{d}2; k1*S{d}1"
+''' % (DEFINITIONS_LINE)
 
 
 
@@ -94,16 +90,19 @@ class TestSbstar(unittest.TestCase):
     self.assertEqual(self.sbstar._classifyLine(), LINE_SUBS)
 
   def testErrorMsg(self):
+    if IGNORE_TEST:
+      return
     with self.assertRaises(ValueError):
       self.sbstar._errorMsg("")
 
   def testGetNextLine(self):
+    if IGNORE_TEST:
+      return
     sbstar = SbStar(TEMPLATE_STG2)
     line = sbstar._getNextLine()
     lines = []
     nn = 0
     expecteds = TEMPLATE_STG2.split('\n')
-    expecteds.reverse()
     while line is not None:
       expected = expecteds[nn]
       nn += 1
@@ -112,6 +111,43 @@ class TestSbstar(unittest.TestCase):
       line = sbstar._getNextLine()
     expected = len(expecteds)
     self.assertEqual(expected, len(lines))
+
+  def testGetNextLineContinuation(self):
+    if IGNORE_TEST:
+      return
+    stg = '''this \
+    is a \
+    continuation.'''
+    sbstar = SbStar(stg)
+    line = sbstar._getNextLine()
+    self.assertTrue("is a" in line)
+    self.assertTrue("continuation" in line)
+    line = sbstar._getNextLine()
+    self.assertIsNone(line)
+
+  def testMakeVariableDefinitions(self):
+    if IGNORE_TEST:
+      return
+    self.sbstar._current_line = DEFINITIONS_LINE
+    self.sbstar._makeVariableDefinitions()
+    self.assertEqual(DEFINITIONS, self.sbstar._definitions)
+
+  def testExpand(self):
+    if IGNORE_TEST:
+      return
+    lines = self.sbstar.expand()
+    for val in DEFINITIONS['a']:
+      self.assertTrue("J%s1:" % val in lines)
+
+  def testExpandErrorInDefinition(self):
+    #if IGNORE_TEST:
+    #  return
+    sbstar = SbStar(TEMPLATE_STG3)
+    with self.assertRaises(ValueError):
+      lines = sbstar.expand()
+    sbstar = SbStar(TEMPLATE_STG4)
+    with self.assertRaises(ValueError):
+      lines = sbstar.expand()
 
 
 if __name__ == '__main__':
