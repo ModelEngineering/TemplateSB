@@ -47,4 +47,4 @@ The repository is organized as follows:
 *  The Code directory contains the python code and tests for the template preprocessor.
 *  The Examples directory contains an example of a template input and the output produced by SbStar.
 *  setup.py installs prerequisites for running SbStar.
-*  run.py is runs SbStar, taking a file as input. 
+*  run.py is runs SbStar using stdin and stdout.
