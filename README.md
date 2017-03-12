@@ -23,8 +23,10 @@ For example, reaction J1 is realized by assigning '' (the null string) to both l
 
 Template variables are explicitly at the top of the model using the escape string “#!”. The declaration has the syntax of a python dictionary. A line is continued if it ends with a backslash (“\”).
 
-Below is a representation in templates of the 64 methylation reactions (24 reactions for each of
-J1\* and J2\* and 8 reactions for each of J3\*2\* and J3\*3\*) in required by the Spiro model. 
+Below is a representation in templates of the 64 methylation 
+reactions (24 reactions for each of
+J1\* and J2\* and 8 reactions for each of 
+J3\*2\* and J3\*3\*) as required by the Spiro model. 
 
   <p>#! SbStar Version 1.0 {‘p’:[‘p’,‘’], ‘l’:[‘L’,‘’], ‘r’:[‘R’,‘’], \ </p>
 
