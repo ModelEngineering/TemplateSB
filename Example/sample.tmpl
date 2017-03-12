@@ -1,0 +1,15 @@
+# Template for an Antimony model
+# The following line defines the template variables.
+# Note that definitions are expressed as a python dictionary
+# where the key is the template variable and its values
+# are the set of substitutions.
+#! SbStar Version 1.0 {'s': ['a', 'b'], 't': ['x', 'y']}
+# This template reaction creates four actual reactions
+J{s}{t}: S1{s}{t} -> S2{s}{t}; k1*S1{s}{t}
+# This template reaction creates two actual reactions
+J{s}: S3{s} -> S4{s}; k2{s}*S3{s}
+k1 = 1
+k2a = 0.2
+k2b = 0.5
+S1{s}{t} = 1
+S3{s} = 1
