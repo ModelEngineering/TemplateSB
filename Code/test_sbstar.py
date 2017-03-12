@@ -101,10 +101,16 @@ class TestSbstar(unittest.TestCase):
     sbstar = SbStar(TEMPLATE_STG2)
     line = sbstar._getNextLine()
     lines = []
+    nn = 0
+    expecteds = TEMPLATE_STG2.split('\n')
+    expecteds.reverse()
     while line is not None:
+      expected = expecteds[nn]
+      nn += 1
       lines.append(line)
+      self.assertEqual(line, expected)
       line = sbstar._getNextLine()
-    expected = TEMPLATE_STG2.count("\n")
+    expected = len(expecteds)
     self.assertEqual(expected, len(lines))
 
 

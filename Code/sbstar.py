@@ -111,6 +111,8 @@ class SbStar(object):
       LINE_TRAN: Transparent - nothing to process (comment line, no template variable)
       LINE_DEFN: Variable definition - variable definition line
       LINE_SUBS: Substitution line
+    State used:
+      reads: _current_line
     :return int: see LINE_* for interpretation
     """
     text = self._current_line.strip()
@@ -136,16 +138,20 @@ class SbStar(object):
   def _getNextLine(self):
     """
     Gets the next line, handling continued lines.
+    State used:
+      reads: _lineno, _lines
+      writes: _current_line, _lineno
     :sideeffects: self._current_line, self._lineno
     :return str: Current line with continuations
     """
-    self._current_line = ""
+    self._current_line = None
     while self._lineno < len(self._lines):
+      if self._current_line is None:
+        self._current_line = ""
       text = self._lines[self._lineno].strip()
       self._lineno += 1
       if len(text) == 0:
         continue
-      import pdb; pdb.set_trace()
       if text[-1] == CONTINUED_STG:
         self._current_line = self._current_line + text[0:-1]
       else:
@@ -156,6 +162,9 @@ class SbStar(object):
   def _makeVariableDefinitions(self):
     """
     Extract the variable definitions from the input.
+    State used:
+      reads: _current_line
+      writes: _definitions
     :sideeffects self._definitions:
     """
     tokens = self._current_line.split('')
@@ -188,6 +197,8 @@ class SbStar(object):
       2. Extract the template variable definitions
       3. Construct the substitution instances
       4. Process the lines with template variables
+    State used:
+      reads: _definitions
     :return str expanded_string:
     :raises ValueError: errors encountered in the template string
     """
