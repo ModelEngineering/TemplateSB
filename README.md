@@ -1,5 +1,5 @@
 # SbStar
-SbStar is a template pre-processor for Antimony models, models that are used in the Tellurium system to describe chemical kinetics. The name SbStar is a combination of the chemical symbol for the element antimony and the use of the the star ("*") operator in templates such as regular expressions.
+SbStar is a template pre-processor for Antimony, a system for expression kinetics models in Tellurium. The name SbStar is a combination of the chemical symbol for the element antimony and the use of the the star ("*") operator in templates such as regular expressions.
 
 The motivation for SbStar is as follows. Often, realistic kinetics models require representing a large number of reactions. The resulting model is difficult to write, and difficult to understand.
 
