@@ -27,18 +27,18 @@ class Substituter(object):
 
   def __init__(self, substitutions):
     """
-    :param list-of-dict substitutions: List of dictionaries in which the 
+    :param list-of-dict substitutions: List of dictionaries in which the
          key is the target and the value is its replacement
     """
     self._substitutions = substitutions
 
   @classmethod
-  def makeSubstitutionList(cls, definitions,
-      left_delim=VARIABLE_START,
+  def makeSubstitutionList(cls, definitions,  \
+      left_delim=VARIABLE_START,  \
       right_delim=VARIABLE_END):
     """
     Creates a list of substitutions from a substitution defintion.
-    Suppose that the defintions are the dictionary 
+    Suppose that the defintions are the dictionary
     {'a': ['a1', 'a2'], 'b': ['b1', 'b2', 'b3']}.
     Then a substituion list will be a list of dictionaries, each of which
     has a key for the two targets ('a' and 'b') and every combination of
@@ -59,7 +59,7 @@ class Substituter(object):
         # Create an substituion instance for this key and value
         new_list = [dict(d) for d in substitutions]
         tgt = "%s%s%s" % (left_delim, str(key), right_delim)
-        [d.update({tgt: val}) for d in new_list]
+        _ = [d.update({tgt: val}) for d in new_list]
         accum_list.extend(new_list)
       substitutions = list(accum_list)
     return [d for d in substitutions if len(d.keys()) > 0]
@@ -77,7 +77,7 @@ class Substituter(object):
       for target, replc in substitution_dict.items():
         new_string = replaced_string.replace(target, replc)
         replaced_string = new_string
-      if not replaced_string in replacements:
+      if replaced_string not in replacements:
         replacements.append(replaced_string)
     if len(replacements) == 0:
       replacements.append(stg)
@@ -131,7 +131,7 @@ class SbStar(object):
   def _errorMsg(self, msg):
     """
     :param str msg:
-    :raises ValueError: 
+    :raises ValueError:
     """
     error = "on line %d. %s" % (self._lineno, msg)
     raise ValueError(error)
@@ -176,19 +176,22 @@ class SbStar(object):
     version = tokens[TOKEN_VERSION]
     try:
       if float(version) > float(VERSION):
-        self._errorMsg("Version number not recognized")     
-    except Exception:
+        self._errorMsg("Version number not recognized")
+    except ValueError:
       self._errorMsg("Version number not recognized")
     # Valid Variable Definitions line
     definitions = " ".join(tokens[TOKEN_DEFSTART:])
     try:
+      #pylint: disable=W0123
       self._definitions = eval(definitions)
-    except:
+    #pylint: disable=W0703
+    except Exception:
       self._errorMsg("Invalid variable definitions.")
 
-  def _makeComment(self, line):
+  @staticmethod
+  def _makeComment(line):
     return "%s%s" % (COMMENT_STG, line)
-      
+
   def expand(self):
     """
     Processes the template string and returns the expanded lines for input
@@ -212,7 +215,7 @@ class SbStar(object):
         expansions.append(line)
       elif line_type == LINE_DEFN:
         # Process definitions of template variables
-        expansions.append(self._makeComment(line.strip()))
+        expansions.append(SbStar._makeComment(line.strip()))
         self._makeVariableDefinitions()
         substitutions = Substituter.makeSubstitutionList(self._definitions)
         substituter = Substituter(substitutions)
@@ -222,13 +225,19 @@ class SbStar(object):
           self._errorMsg(msg)
         # Do the variable substitutions
         expansion = substituter.replace(line)
-        is_ok = all([False if (VARIABLE_START in e) 
+        is_ok = all([False if (VARIABLE_START in e)
                      or (VARIABLE_END in e)
                      else True for e in expansion])
         if not is_ok:
           self._errorMsg("Undefined template variable in line.")
         if len(expansion) > 1:
-          expansions.append(self._makeComment(line))
+          expansions.append(SbStar._makeComment(line))
         expansions.extend(expansion)
       line = self._getNextLine()
     return "\n".join(expansions)
+
+  def get(self):
+    """
+    :return str: template
+    """
+    return self._template_string
