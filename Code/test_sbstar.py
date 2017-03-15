@@ -1,12 +1,15 @@
+"""
+Tests for SbStar.
+"""
 import unittest
 import numpy as np
-from sbstar import SbStar, PROCESSOR_NAME, Substituter, LINE_TRAN,  \
-    LINE_DEFN, COMMENT_STG, ESCAPE_STG, LINE_SUBS
+from Code.sbstar import SbStar, PROCESSOR_NAME, Substituter,  \
+    LINE_TRAN, LINE_DEFN, ESCAPE_STG, LINE_SUBS
 
 
 IGNORE_TEST = True
 DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3']}
-DEFINITIONS_LINE =  "%s %s Version 1.0 %s" %  \
+DEFINITIONS_LINE = "%s %s Version 1.0 %s" %  \
     (ESCAPE_STG, PROCESSOR_NAME, str(DEFINITIONS))
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
 SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
@@ -101,11 +104,11 @@ class TestSbstar(unittest.TestCase):
     sbstar = SbStar(TEMPLATE_STG2)
     line = sbstar._getNextLine()
     lines = []
-    nn = 0
+    idx = 0
     expecteds = TEMPLATE_STG2.split('\n')
     while line is not None:
-      expected = expecteds[nn]
-      nn += 1
+      expected = expecteds[idx]
+      idx += 1
       lines.append(line)
       self.assertEqual(line, expected)
       line = sbstar._getNextLine()
@@ -144,10 +147,10 @@ class TestSbstar(unittest.TestCase):
     #  return
     sbstar = SbStar(TEMPLATE_STG3)
     with self.assertRaises(ValueError):
-      lines = sbstar.expand()
+      _ = sbstar.expand()
     sbstar = SbStar(TEMPLATE_STG4)
     with self.assertRaises(ValueError):
-      lines = sbstar.expand()
+      _ = sbstar.expand()
 
 
 if __name__ == '__main__':
