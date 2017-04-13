@@ -3,11 +3,11 @@ Tests for SbStar.
 """
 import unittest
 import numpy as np
-from Code.sbstar import SbStar, PROCESSOR_NAME, Substituter,  \
+from sbstar import SbStar, PROCESSOR_NAME, Substituter,  \
     LINE_TRAN, LINE_DEFN, ESCAPE_STG, LINE_SUBS
 
 
-IGNORE_TEST = True
+IGNORE_TEST = False
 DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3']}
 DEFINITIONS_LINE = "%s %s Version 1.0 %s" %  \
     (ESCAPE_STG, PROCESSOR_NAME, str(DEFINITIONS))
