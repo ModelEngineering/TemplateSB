@@ -79,7 +79,8 @@ class Substituter(object):
     """
     pat = re.compile('\{[\w\s,]+\}')  # Single template variable
     raw_strings = pat.findall(stg)
-    return [r.strip().replace(' ', '')  for r in raw_string]
+    variables = [r.strip().replace(' ', '')  for r in raw_string]
+    return variables
 
   def _updateDefinitions(self, stg):
     """
