@@ -15,30 +15,45 @@ Fortunately, the set of reactions can often be simplified due to independence as
   
 Note that the reactions are independent of phosphorylation and ligand binding in that the kinetics constants do not change with these receptor states. To represent the complete set of methylation reactions in the Spiro model, we’d consider methylation levels of 3 and 4 as well, resulting in 12 reactions.
 
-SbStar is a template preprocessor to antimony whereby the complete set of 12 reactions can be expressed in a more compact way. The idea of a template is drawn from the Jinja template system for rendering web pages that provides variable substitutions. For the Antimony template processor, variables will be declared with a set of possible values. A reaction is written with template variables enclosed in braces ({, }). For example, suppose l is template variable for a ligand (as in LT2) that takes on either the values of 'L' or '', and p is a template variable for phosphorylation (as in T2p) that takes on the values of either 'p' or ''. Then the above four reactions can be expressed in a single line as:
+SbStar is a template preprocessor to antimony whereby the complete set of 12 reactions can be expressed in a more compact way. The idea of a template is drawn from the Jinja template system for rendering web pages that provides variable substitutions. For the Antimony template processor, variables will be declared with a set of possible values. A reaction is written with template variables enclosed in braces ({, }). For example, suppose {L} is template variable for a ligand (as in LT2) that takes on either the values of 'L' or '', and {p} is a template variable for phosphorylation (as in T2p) that takes on the values of either 'p' or ''. Then the above four reactions can be expressed in a single line as:
 
-{l}T2{p}R -> {l}T3{p} + R; k2*{l}T2{p}R
+{L}T2{p}R -> {L}T3{p} + R; k2*{L}T2{p}R
 
-For example, reaction J1 is realized by assigning '' (the null string) to both l and p. The other four reactions are constructed by using the other three combinations of the values of template variables. Note that both kinetics expressions and reaction labels can use template variables.
+The template processor "flattens" this expression. That is, reaction J1 is realized by assigning '' (the null string) to both {L} and {p}. The other four reactions are constructed by using the other three combinations of the values of template variables. Note that both kinetics expressions and reaction labels can use template variables.
 
-Template variables are explicitly at the top of the model using the escape string “#!”. The declaration has the syntax of a python dictionary. A line is continued if it ends with a backslash (“\”).
+In the foregoing, we considered template variables that have two possible values, either the non-white space value
+enclosed within the braces or the null string.
+Template variables can also have a list a values. 
+This is specified by a comma separated list. White space is ignored.
+For example "T{1,2,3} -> ;k" expands to:
+
+  T1 -> ;k
+  T2 -> ;k
+  T3 -> ;k
+  
+Note that with list values there is no substituion for the null string.
+
+Yet another possibility is to explicitly declare
+the values assigned to template variables at the top of the Antimony model.
+This is done using the escape string “#!”. The declaration has the syntax of a python dictionary. 
+A line is continued if it ends with a backslash (“\”).
 
 Below is a representation in templates of the 64 methylation 
 reactions (24 reactions for each of
 J1\* and J2\* and 8 reactions for each of 
 J3\*2\* and J3\*3\*) as required by the Spiro model. 
 
-  <p>#! SbStar Version 1.0 {‘p’:[‘p’,‘’], ‘l’:[‘L’,‘’], ‘r’:[‘R’,‘’], \ </p>
+  <p>#! SbStar Version 1.0 {‘p’:[‘p’,‘’], ‘L’:[‘L’,‘’], ‘r’:[‘R’,‘’], \ </p>
 
   ‘m’:[‘2’, ‘3’, ‘4’]}
  
-  J1{l}{m}{p}: {l}T{m}{p} + R -> {l}T{m}{p}R; k1{m} \* {l}T{m}{p} \* R
+  J1{L}{m}{p}: {L}T{m}{p} + R -> {L}T{m}{p}R; k1{m} \* {L}T{m}{p} \* R
   
-  J2{l}{m}{p}: {l}T{m}{p}R -> {l}T{m}{p} + R; k2{m} \* {l}T{m}{p}R
+  J2{L}{m}{p}: {L}T{m}{p}R -> {L}T{m}{p} + R; k2{m} \* {L}T{m}{p}R
   
-  J3{l}2{p}: {l}T2{p}R -> {l}T3{p} + R; k32 \* {l}T2{p}R
+  J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32 \* {L}T2{p}R
   
-  J3{l}3{p}: {l}T3{p}R -> {l}T4{p} + R; k33 \* {l}T3{p}R
+  J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33 \* {L}T3{p}R
 
 One possible extension is to permit having a python expression inside a template instance (within “{“ and “}”). This feature would eliminate one of the templated model lines in the above model by using {m+1} as a template instance.
 
