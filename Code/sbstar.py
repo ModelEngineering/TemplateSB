@@ -1,5 +1,12 @@
 '''Class for processing templates. See README for syntax.'''
 
+"""
+1. Completed draft of code for implicit definitions
+2. Tests for different parsing cases
+"""
+
+import re
+
 
 ESCAPE_STG = '#!'
 PROCESSOR_NAME = "SbStar"
@@ -12,6 +19,7 @@ VARIABLE_END = "}"
 LINE_TRAN = 1  # Transparent - nothing to process (comment line, no template variable)
 LINE_DEFN = 2  # Variable definition - variable definition line
 LINE_SUBS = 3  # Substitution line
+SEP = ","  # Separator for template variables
 TOKEN_ESCAPE = 0
 TOKEN_PROCESSOR = 1
 TOKEN_VERSION = 3
@@ -25,12 +33,11 @@ class Substituter(object):
   considered for each target.
   """
 
-  def __init__(self, substitutions):
+  def __init__(self, definitions):
     """
-    :param list-of-dict substitutions: List of dictionaries in which the
-         key is the target and the value is its replacement
+    :param dict definitions: key is the string to replace, values are the substitutions
     """
-    self._substitutions = substitutions
+    self._definitions = definitions
 
   @classmethod
   def makeSubstitutionList(cls, definitions,  \
@@ -64,6 +71,42 @@ class Substituter(object):
       substitutions = list(accum_list)
     return [d for d in substitutions if len(d.keys()) > 0]
 
+  def _getTemplateVariables(self, stg):
+    """
+    Finds the template variables in the line, those variables with "{.*}".
+    :param str stg:
+    :return list-of-str:
+    """
+    pat = re.compile('\{[\w\s,]+\}')  # Single template variable
+    raw_strings = pat.findall(stg)
+    return [r.strip().replace(' ', '')  for r in raw_string]
+
+  def _updateDefinitions(self, stg):
+    """
+    Creates the dictionary definition the implicit substitutions for the template variables.
+    There are two cases. First, there is no comma in the variable name, such as
+    {ll}. In this case, the substituitions are either "ll" or "".
+    The second case is there is a list of values, such as "{1,3,55a}". Here
+    the substions are are "1", "3", and "55a".
+    :param str stg: line to be parsed
+    """
+    template_variables = self._getTemplateVariables(stg)
+    result = {}
+    for var in template_variables:
+      trim_var = var[1:-1]  # Drop the braces
+      # Ignore the variable if it is already defined
+      if trim_var in self._definitions.keys():
+        continue
+      # Not already definied
+      if trim_var.find(SEP) > -1:
+        # Is a list
+        values = trim_var.split(SEP)
+      else:
+        # Singleton value
+        values = [trim_var, ""]
+      result[var] = values
+    self._definitions.update(result)
+      
   def replace(self, stg):
     """
     Replaces all instances of target strings in the line,
@@ -72,7 +115,10 @@ class Substituter(object):
     :return list-of-str:
     """
     replacements = []
-    for substitution_dict in self._substitutions:
+    cls = Substituter
+    self._updateDefinitions(stg)
+    substitutions = cls.makeSubstitionList(self._definitions)
+    for substitution_dict in substitutions:
       replaced_string = stg
       for target, replc in substitution_dict.items():
         new_string = replaced_string.replace(target, replc)
@@ -82,7 +128,6 @@ class Substituter(object):
     if len(replacements) == 0:
       replacements.append(stg)
     return replacements
-
 
 class SbStar(object):
   """
@@ -100,7 +145,6 @@ class SbStar(object):
     self._template_string = template_string
     self._lines = self._template_string.split(SPLIT_STG)
     self._definitions = {}  # Dictionary of template variables and values
-    self._substitutions = []  # List of dictionaries of substitutions
     self._lineno = 0
     self._current_line = None  # Complete line extracted from input
 
@@ -207,7 +251,7 @@ class SbStar(object):
     :raises ValueError: errors encountered in the template string
     """
     expansions = []
-    substituter = None
+    substituter = Substituter({})
     line = self._getNextLine()
     while line is not None:  # End of input if None
       line_type = self._classifyLine()
@@ -217,12 +261,8 @@ class SbStar(object):
         # Process definitions of template variables
         expansions.append(SbStar._makeComment(line.strip()))
         self._makeVariableDefinitions()
-        substitutions = Substituter.makeSubstitutionList(self._definitions)
-        substituter = Substituter(substitutions)
+        substituter = Substituter(self._definitions)
       else:
-        if substituter is None:
-          msg = "Substitution encountered before definition of template variables."
-          self._errorMsg(msg)
         # Do the variable substitutions
         expansion = substituter.replace(line)
         is_ok = all([False if (VARIABLE_START in e)
