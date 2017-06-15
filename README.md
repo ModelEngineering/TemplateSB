@@ -28,7 +28,9 @@ This is specified by a comma separated list. White space is ignored.
 For example "T{1,2,3} -> ;k" expands to:
 
   T1 -> ;k
+  
   T2 -> ;k
+  
   T3 -> ;k
   
 Note that with list values there is no substituion for the null string.
