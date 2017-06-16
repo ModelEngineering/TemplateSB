@@ -6,11 +6,13 @@
 """
 
 import re
+import fileinput
+import sys
 
 
 ESCAPE_STG = '#!'
 PROCESSOR_NAME = "SbStar"
-VERSION = '1.0'
+VERSION = '1.1'
 SPLIT_STG = "\n"
 COMMENT_STG = "#"
 CONTINUED_STG = "\\"  # Indicates a continuation follows
@@ -152,6 +154,22 @@ class SbStar(object):
     self._lineno = 0
     self._current_line = None  # Complete line extracted from input
 
+  @classmethod
+  def processFile(cls, inpath, outpath):
+    """
+    Processes template strings in a file.
+    :param str inpath: path to the file containing the templated model
+    :param str outpath: path to the file where the flattened model is placed
+    """
+    template_stg = ''
+    with open(inpath, 'r') as infile:
+      for line in infile:
+        template_stg += "\n" + line
+    sbstar = cls(template_stg)
+    expanded_stg = sbstar.expand()
+    with open(outpath, 'w') as outfile:
+      outfile.write(expanded_stg)
+
   def _classifyLine(self):
     """
     Classifies a line as:
@@ -240,9 +258,8 @@ class SbStar(object):
     for key in self._definitions.keys():
       if not key[0] == VARIABLE_START or  \
           not key[-1] == VARIABLE_END:
-        msg = "Template variable must be enclosed in %s, %s"  \
-            % (VARIABLE_START, VARIABLE_END)
-        import pdb; pdb.set_trace()
+        msg = "Template variable '%s' must be enclosed in %s, %s"  \
+            % (key, VARIABLE_START, VARIABLE_END)
         self._errorMsg(msg)
 
   @staticmethod

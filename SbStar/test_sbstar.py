@@ -227,6 +227,9 @@ class TestSbstar(unittest.TestCase):
     sbstar = SbStar(template_reaction)
     result = sbstar.expand()
 
+  def testFile(self):
+    SbStar.processFile("../Example/sample.tmpl", "/tmp/out.mdl")
+
 
 if __name__ == '__main__':
   unittest.main()

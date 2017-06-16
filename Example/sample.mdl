@@ -1,0 +1,58 @@
+# Template for an Antimony model
+# The following line defines the template variables.
+# Note that definitions are expressed as a python dictionary
+# where the key is the template variable and its values
+# are the set of substitutions.
+##! SbStar Version 1.1 {'{s}': ['a', 'b'], '{t}': ['x', 'y']}
+# This template reaction creates four actual reactions
+#J{s}{t}: S1{s}{t} -> S2{s}{t}; k1*S1{s}{t}
+Jax: S1ax -> S2ax; k1*S1ax
+Jbx: S1bx -> S2bx; k1*S1bx
+Jay: S1ay -> S2ay; k1*S1ay
+Jby: S1by -> S2by; k1*S1by
+# This template reaction creates two actual reactions
+#J{s}: S3{s} -> S4{s}; k2{s}*S3{s}
+Ja: S3a -> S4a; k2a*S3a
+Jb: S3b -> S4b; k2b*S3b
+# This reaction uses implicit definitions for {x,y,z}
+#J{x,y,z}{1,2}: S3{x,y,z}{1,2} -> S4{x,y,z}{1,2}; k2*S3{x,y,z}{1,2}
+Jx1: S3x1 -> S4x1; k2*S3x1
+Jx2: S3x2 -> S4x2; k2*S3x2
+Jy1: S3y1 -> S4y1; k2*S3y1
+Jy2: S3y2 -> S4y2; k2*S3y2
+Jz1: S3z1 -> S4z1; k2*S3z1
+Jz2: S3z2 -> S4z2; k2*S3z2
+k1 = 1
+k2a = 0.2
+k2b = 0.5
+#S1{s}{t} = 1
+S1ax = 1
+S1bx = 1
+S1ay = 1
+S1by = 1
+#S3{s} = 1
+S3a = 1
+S3b = 1
+#S3{x,y,z}{1,2} = 1.2
+S3x1 = 1.2
+S3x2 = 1.2
+S3y1 = 1.2
+S3y2 = 1.2
+S3z1 = 1.2
+S3z2 = 1.2
+#S2{s}{t} = 1
+S2ax = 1
+S2bx = 1
+S2ay = 1
+S2by = 1
+#S4{x,y,z}{1,2} = 1
+S4x1 = 1
+S4x2 = 1
+S4y1 = 1
+S4y2 = 1
+S4z1 = 1
+S4z2 = 1
+#S4{s} = 1
+S4a = 1
+S4b = 1
+k2 = 1
