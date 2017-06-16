@@ -218,6 +218,15 @@ class TestSbstar(unittest.TestCase):
         sbstar = SbStar(template)
         result = sbstar.expand()
 
+  def testCase1(self):
+    if IGNORE_TEST:
+      return
+    template_reaction = '''
+    J{x,y,z}: S3{x,y,z} -> S4{x,y,z}; k2{x,y,z}*S3{x,y,z}
+    '''
+    sbstar = SbStar(template_reaction)
+    result = sbstar.expand()
+
 
 if __name__ == '__main__':
   unittest.main()

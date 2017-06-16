@@ -5,7 +5,7 @@
 """
 import fileinput
 import sys
-from Code.sbstar import SbStar
+from SbStar.sbstar import SbStar
 
 template_stg = ''
 for line in fileinput.input():

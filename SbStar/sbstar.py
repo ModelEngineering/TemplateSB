@@ -242,6 +242,7 @@ class SbStar(object):
           not key[-1] == VARIABLE_END:
         msg = "Template variable must be enclosed in %s, %s"  \
             % (VARIABLE_START, VARIABLE_END)
+        import pdb; pdb.set_trace()
         self._errorMsg(msg)
 
   @staticmethod
