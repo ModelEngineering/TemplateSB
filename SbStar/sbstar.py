@@ -97,10 +97,10 @@ class Substituter(object):
     template_variables = self._getTemplateVariables(stg)
     result = {}
     for var in template_variables:
-      trim_var = var[1:-1]  # Drop the braces
       # Ignore the variable if it is already defined
-      if trim_var in self._definitions.keys():
+      if var in self._definitions.keys():
         continue
+      trim_var = var[1:-1]
       # Not already definied
       if trim_var.find(SEP) > -1:
         # Is a list
@@ -229,12 +229,20 @@ class SbStar(object):
       self._errorMsg("Version number not recognized")
     # Valid Variable Definitions line
     definitions = " ".join(tokens[TOKEN_DEFSTART:])
+    # Verify that this is a valid Python dict
     try:
       #pylint: disable=W0123
       self._definitions = eval(definitions)
     #pylint: disable=W0703
     except Exception:
       self._errorMsg("Invalid variable definitions.")
+    # Verify the format of the template variables
+    for key in self._definitions.keys():
+      if not key[0] == VARIABLE_START or  \
+          not key[-1] == VARIABLE_END:
+        msg = "Template variable must be enclosed in %s, %s"  \
+            % (VARIABLE_START, VARIABLE_END)
+        self._errorMsg(msg)
 
   @staticmethod
   def _makeComment(line):
@@ -273,7 +281,8 @@ class SbStar(object):
                      or (VARIABLE_END in e)
                      else True for e in expansion])
         if not is_ok:
-          self._errorMsg("Undefined template variable in line.")
+          msg = "Undefined template variable in line:\n%s" % line
+          self._errorMsg(msg)
         if len(expansion) > 1:
           expansions.append(SbStar._makeComment(line))
         expansions.extend(expansion)

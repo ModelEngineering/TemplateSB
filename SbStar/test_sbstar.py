@@ -1,18 +1,26 @@
 """
 Tests for SbStar.
 """
-import unittest
-import numpy as np
 from sbstar import SbStar, PROCESSOR_NAME, Substituter,  \
     LINE_TRAN, LINE_DEFN, ESCAPE_STG, LINE_SUBS
 
+import copy
+import unittest
+import numpy as np
+
 
 IGNORE_TEST = False
-DEFINITIONS = {'{a}': ['a', 'b', 'c'], '{m}': ['1', '2', '3']}
+DEFINITIONS = {'{a}': ['a', 'b', 'c'], '{m}': ['1', '2', '3'],
+    '{c}': ['c', '']}
+BAD_DEFINITIONS1 = {'{a}': ['a', 'b', 'c'], '{m}': ['1', '2', '3'],
+    '{c': ['c', '']}
 DEFINITIONS_LINE = "%s %s Version 1.0 %s" %  \
     (ESCAPE_STG, PROCESSOR_NAME, str(DEFINITIONS))
+BAD_DEFINITIONS_LINE1 = "%s %s Version 1.0 %s" %  \
+    (ESCAPE_STG, PROCESSOR_NAME, str(BAD_DEFINITIONS1))
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
 SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
+SUBSTITUTION3 = "J{c}1: S{c}1 -> S{c}2; k1*S{c}1"
 TEMPLATE_STG1 = '''
 %s
 # No substitution
@@ -24,10 +32,28 @@ TEMPLATE_STG2 = '''%s
 TEMPLATE_STG3 = '''
 # Missing template variable definition
 %s''' % SUBSTITUTION2
-TEMPLATE_STG4 = '''%s
-# Substitution error
-SUBSTITUTION2 = "J{d}1: S{d}1 -> S{d}2; k1*S{d}1"
-''' % (DEFINITIONS_LINE)
+BAD_TEMPLATE1 = '''%s
+# Definition error
+J{z}1: S{z}1 -> S{d}2; k1*S{d}1
+''' % (BAD_DEFINITIONS_LINE1)
+TEMPLATE_STG5 = '''%s
+# Substitution
+%s''' % (DEFINITIONS_LINE, SUBSTITUTION3)
+
+
+def isSubDict(dict_super, dict_sub):
+  """
+  Tests if the second dictonary is a subset of the first.
+  :param dict dict_super:
+  :param dict dict_sub:
+  :return bool:
+  """
+  for key in dict_sub.keys():
+    if not key in dict_super:
+      return False
+    if not dict_sub[key] == dict_super[key]:
+      return False
+  return True
 
 
 
@@ -79,23 +105,19 @@ class TestSubtituter(unittest.TestCase):
     expected = len(DEFINITIONS['{a}'])
     self.assertEqual(len(result), expected)
 
-  def _IsSubDict(self, dict_super, dict_sub):
-    for key in dict_sub.keys():
-      if not key in dict_super:
-        return False
-      if not dict_sub[key] == dict_super[key]:
-        return False
-    return True
-
   def testUpdateDefinitions(self):
     if IGNORE_TEST:
       return
-    stg = "x{b} -> x + { 1, 2,3 }; k*{b}"
+    stg = "x{c} -> x + { 1, 2,3 }; k*{c}"
     self.substituter._updateDefinitions(stg)
-    definitions = self.substituter._definitions
-    self.assertTrue(self._IsSubDict(definitions, DEFINITIONS))
-    new_definitions = {'{b}': ['b', ''], '{1,2,3}': ['1', '2', '3']}
-    self.assertTrue(self._IsSubDict(definitions, new_definitions))
+    definitions = copy.deepcopy(self.substituter._definitions)
+    self.assertTrue(isSubDict(definitions, DEFINITIONS))
+    new_definitions = {'{c}': ['c', ''], '{1,2,3}': ['1', '2', '3']}
+    self.assertTrue(isSubDict(definitions, new_definitions))
+    stg = "x{a} -> x{a} + { 1, 2,3 }; k*{a}"
+    cur_defns = copy.deepcopy(self.substituter._definitions)
+    self.substituter._updateDefinitions(stg)
+    self.assertEqual(cur_defns, self.substituter._definitions)
     
 
 #############################
@@ -169,20 +191,32 @@ class TestSbstar(unittest.TestCase):
     if IGNORE_TEST:
       return
     lines = self.sbstar.expand()
-    import pdb; pdb.set_trace()
     for val in DEFINITIONS['{a}']:
       self.assertTrue("J%s1:" % val in lines)
+
+  def testExpandWithAndWIthoutDefinition(self):
+    if IGNORE_TEST:
+      return
+    definitions = {'{a}': ['a', 'b', 'c'], '{m}': ['1', '2', '3'],
+        '{c}': ['c', '']}
+    definition_line = "%s %s Version 1.0 %s" %  \
+        (ESCAPE_STG, PROCESSOR_NAME, str(definitions))
+    template_reaction = "J{c}1: S{c}1 -> S{c}2; k1*S{c}1"
+    template_lines = '''%s
+    %s''' % (definition_line, template_reaction)
+    sbstar1 = SbStar(template_lines)
+    result1 = sbstar1.expand()
+    sbstar2 = SbStar(template_reaction)
+    result2 = sbstar2.expand()
+    self.assertTrue(result1.index(result2) > 0)
 
   def testExpandErrorInDefinition(self):
     if IGNORE_TEST:
       return
-    result = self.sbstar.expand()
-    sbstar = SbStar(TEMPLATE_STG3)
-    result2 = sbstar.expand()
-    self.assertEqual(result, result2)
-    sbstar = SbStar(TEMPLATE_STG4)
-    with self.assertRaises(ValueError):
-      _ = sbstar.expand()
+    for template in [BAD_TEMPLATE1]:
+      with self.assertRaises(ValueError):
+        sbstar = SbStar(template)
+        result = sbstar.expand()
 
 
 if __name__ == '__main__':
