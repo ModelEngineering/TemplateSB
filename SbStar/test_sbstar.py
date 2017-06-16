@@ -8,7 +8,7 @@ from sbstar import SbStar, PROCESSOR_NAME, Substituter,  \
 
 
 IGNORE_TEST = False
-DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3']}
+DEFINITIONS = {'{a}': ['a', 'b', 'c'], '{m}': ['1', '2', '3']}
 DEFINITIONS_LINE = "%s %s Version 1.0 %s" %  \
     (ESCAPE_STG, PROCESSOR_NAME, str(DEFINITIONS))
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
@@ -23,8 +23,7 @@ TEMPLATE_STG2 = '''%s
 %s''' % (DEFINITIONS_LINE, SUBSTITUTION2)
 TEMPLATE_STG3 = '''
 # Missing template variable definition
-J{c}1: S{c}1 -> S{c}2; k1*S{c}1
-'''
+%s''' % SUBSTITUTION2
 TEMPLATE_STG4 = '''%s
 # Substitution error
 SUBSTITUTION2 = "J{d}1: S{d}1 -> S{d}2; k1*S{d}1"
@@ -39,7 +38,7 @@ SUBSTITUTION2 = "J{d}1: S{d}1 -> S{d}2; k1*S{d}1"
 class TestSubtituter(unittest.TestCase):
 
   def setUp(self):
-    pass
+    self.substituter = Substituter(DEFINITIONS)
 
   def testMakeSubtitutionList(self):
     if IGNORE_TEST:
@@ -56,17 +55,48 @@ class TestSubtituter(unittest.TestCase):
     expected = np.prod([len(v) for v in definitions.values()])
     self.assertEqual(len(substitution_list), expected)
 
+  def testGetTemplateVariables(self):
+    if IGNORE_TEST:
+      return
+    variables = self.substituter._getTemplateVariables("x{a} -> x + {a}; k*{a}")
+    self.assertEqual(variables,["{a}"])
+    variables = self.substituter._getTemplateVariables("x{a} -> x + {b}; k*{a}")
+    self.assertEqual(variables, ["{a}", "{b}"])
+    variables = self.substituter._getTemplateVariables("x{a} -> x + { b }; k*{a}")
+    self.assertEqual(variables, ["{a}", "{b}"])
+    variables = self.substituter._getTemplateVariables("x{a} -> x + { 1, 2,3 }; k*{a}")
+    self.assertEqual(set(variables), set(["{a}", "{1,2,3}"]))
+    
   def testReplace(self):
     if IGNORE_TEST:
       return
-    substitution_list = Substituter.makeSubstitutionList(DEFINITIONS)
-    substituter = Substituter(substitution_list)
-    result = substituter.replace(TEMPLATE_STG1)
-    self.assertEqual(result[0], TEMPLATE_STG1)
+    substituter = Substituter(DEFINITIONS)
+    strings = TEMPLATE_STG1.split('\n')
+    new_string = ('\n').join(strings[2:])
+    result = substituter.replace(new_string)
+    self.assertEqual(result[0], new_string)
     result = substituter.replace(SUBSTITUTION2)
-    expected = len(DEFINITIONS['a'])
+    expected = len(DEFINITIONS['{a}'])
     self.assertEqual(len(result), expected)
 
+  def _IsSubDict(self, dict_super, dict_sub):
+    for key in dict_sub.keys():
+      if not key in dict_super:
+        return False
+      if not dict_sub[key] == dict_super[key]:
+        return False
+    return True
+
+  def testUpdateDefinitions(self):
+    if IGNORE_TEST:
+      return
+    stg = "x{b} -> x + { 1, 2,3 }; k*{b}"
+    self.substituter._updateDefinitions(stg)
+    definitions = self.substituter._definitions
+    self.assertTrue(self._IsSubDict(definitions, DEFINITIONS))
+    new_definitions = {'{b}': ['b', ''], '{1,2,3}': ['1', '2', '3']}
+    self.assertTrue(self._IsSubDict(definitions, new_definitions))
+    
 
 #############################
 # Tests
@@ -139,15 +169,17 @@ class TestSbstar(unittest.TestCase):
     if IGNORE_TEST:
       return
     lines = self.sbstar.expand()
-    for val in DEFINITIONS['a']:
+    import pdb; pdb.set_trace()
+    for val in DEFINITIONS['{a}']:
       self.assertTrue("J%s1:" % val in lines)
 
   def testExpandErrorInDefinition(self):
-    #if IGNORE_TEST:
-    #  return
+    if IGNORE_TEST:
+      return
+    result = self.sbstar.expand()
     sbstar = SbStar(TEMPLATE_STG3)
-    with self.assertRaises(ValueError):
-      _ = sbstar.expand()
+    result2 = sbstar.expand()
+    self.assertEqual(result, result2)
     sbstar = SbStar(TEMPLATE_STG4)
     with self.assertRaises(ValueError):
       _ = sbstar.expand()

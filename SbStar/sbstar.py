@@ -40,13 +40,11 @@ class Substituter(object):
     self._definitions = definitions
 
   @classmethod
-  def makeSubstitutionList(cls, definitions,  \
-      left_delim=VARIABLE_START,  \
-      right_delim=VARIABLE_END):
+  def makeSubstitutionList(cls, definitions):
     """
     Creates a list of substitutions from a substitution defintion.
     Suppose that the defintions are the dictionary
-    {'a': ['a1', 'a2'], 'b': ['b1', 'b2', 'b3']}.
+    {'{a}': ['a1', 'a2'], '{b}': ['b1', 'b2', 'b3']}.
     Then a substituion list will be a list of dictionaries, each of which
     has a key for the two targets ('a' and 'b') and every combination of
     value for the keys. Assume the default left and right delimiters. In this case:
@@ -55,8 +53,6 @@ class Substituter(object):
         {'{a}': 'a1', '{b}': 'b3'}, ['{a}': 'a2', '{b}': 'b3'}
       ]
     :param dict definitions: key is target name, value is list of replacements
-    :param str left_delim: left delimiter for target
-    :param str right_delim: right delimiter for target
     :return list-of-dict:
     """
     substitutions = [{}]
@@ -65,21 +61,28 @@ class Substituter(object):
       for val in definitions[key]:
         # Create an substituion instance for this key and value
         new_list = [dict(d) for d in substitutions]
-        tgt = "%s%s%s" % (left_delim, str(key), right_delim)
+        tgt = key
         _ = [d.update({tgt: val}) for d in new_list]
         accum_list.extend(new_list)
       substitutions = list(accum_list)
     return [d for d in substitutions if len(d.keys()) > 0]
 
-  def _getTemplateVariables(self, stg):
+  def _getTemplateVariables(self, stg, 
+       left_delim=VARIABLE_START, right_delim=VARIABLE_END):
     """
-    Finds the template variables in the line, those variables with "{.*}".
+    Finds the template variables in the line, those variables between 
+    the delimiters.
     :param str stg:
+    :param char left_delim:
+    :param char right_delim:
     :return list-of-str:
     """
-    pat = re.compile('\{[\w\s,]+\}')  # Single template variable
+    pattern_str = "\%s[\w\s,]+\%s" % (left_delim, right_delim)  # Single template variable
+    pat = re.compile(pattern_str)  # Single template variable
     raw_strings = pat.findall(stg)
-    variables = [r.strip().replace(' ', '')  for r in raw_string]
+    raw_variables =  \
+        [r.strip().replace(' ', '')  for r in raw_strings]
+    variables = [x for x in set(raw_variables)]
     return variables
 
   def _updateDefinitions(self, stg):
@@ -118,7 +121,7 @@ class Substituter(object):
     replacements = []
     cls = Substituter
     self._updateDefinitions(stg)
-    substitutions = cls.makeSubstitionList(self._definitions)
+    substitutions = cls.makeSubstitutionList(self._definitions)
     for substitution_dict in substitutions:
       replaced_string = stg
       for target, replc in substitution_dict.items():
