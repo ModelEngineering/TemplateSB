@@ -4,17 +4,18 @@
 # where the key is the template variable and its values
 # are the set of substitutions.
 ##! SbStar Version 1.1 {'{s}': ['a', 'b'], '{t}': ['x', 'y']}
-# This template reaction creates four actual reactions
+# This template reaction creates four flattened reactions
 #J{s}{t}: S1{s}{t} -> S2{s}{t}; k1*S1{s}{t}
 Jax: S1ax -> S2ax; k1*S1ax
 Jbx: S1bx -> S2bx; k1*S1bx
 Jay: S1ay -> S2ay; k1*S1ay
 Jby: S1by -> S2by; k1*S1by
-# This template reaction creates two actual reactions
+# This template reaction creates two flattend reactions
 #J{s}: S3{s} -> S4{s}; k2{s}*S3{s}
 Ja: S3a -> S4a; k2a*S3a
 Jb: S3b -> S4b; k2b*S3b
-# This reaction uses implicit definitions for {x,y,z}
+# This reaction uses implicit definitions for {x,y,z} & {1,2}
+# to generate 6 flattened reactions.
 #J{x,y,z}{1,2}: S3{x,y,z}{1,2} -> S4{x,y,z}{1,2}; k2*S3{x,y,z}{1,2}
 Jx1: S3x1 -> S4x1; k2*S3x1
 Jx2: S3x2 -> S4x2; k2*S3x2
