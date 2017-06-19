@@ -11,7 +11,7 @@ import sys
 
 
 ESCAPE_STG = '#!'
-PROCESSOR_NAME = "SbStar"
+PROCESSOR_NAME = "TemplateSB"
 VERSION = '1.1'
 SPLIT_STG = "\n"
 COMMENT_STG = "#"
@@ -135,18 +135,17 @@ class Substituter(object):
       replacements.append(stg)
     return replacements
 
-class SbStar(object):
+class TemplateSB(object):
   """
   This class processes an Antimony model written using template variable substitutions.
   See the project README for syntax details.
   Usage:
     import tellurium as te
-    sbstar = Sbstar(template_string)
-    expanded_string = sbstar.expand()
+    templatesb = Sbstar(template_string)
+    expanded_string = templatesb.expand()
     rr = te.loada(expanded_string)
     results = rr.simulate(start, end, samples)
   """
-
   def __init__(self, template_string):
     self._template_string = template_string
     self._lines = self._template_string.split(SPLIT_STG)
@@ -165,8 +164,8 @@ class SbStar(object):
     with open(inpath, 'r') as infile:
       for line in infile:
         template_stg += "\n" + line
-    sbstar = cls(template_stg)
-    expanded_stg = sbstar.expand()
+    templatesb = cls(template_stg)
+    expanded_stg = templatesb.expand()
     with open(outpath, 'w') as outfile:
       outfile.write(expanded_stg)
 
@@ -289,7 +288,7 @@ class SbStar(object):
         expansions.append(line)
       elif line_type == LINE_DEFN:
         # Process definitions of template variables
-        expansions.append(SbStar._makeComment(line.strip()))
+        expansions.append(TemplateSB._makeComment(line.strip()))
         self._makeVariableDefinitions()
         substituter = Substituter(self._definitions)
       else:
@@ -302,7 +301,7 @@ class SbStar(object):
           msg = "Undefined template variable in line:\n%s" % line
           self._errorMsg(msg)
         if len(expansion) > 1:
-          expansions.append(SbStar._makeComment(line))
+          expansions.append(TemplateSB._makeComment(line))
         expansions.extend(expansion)
       line = self._getNextLine()
     return "\n".join(expansions)

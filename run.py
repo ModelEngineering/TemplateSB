@@ -5,13 +5,13 @@
 """
 import fileinput
 import sys
-from SbStar.sbstar import SbStar
+from TemplateSB.templatesb import TemplateSB
 
 template_stg = ''
 for line in fileinput.input():
   template_stg += "\n" + line
 
-sbstar = SbStar(template_stg)
-expanded_stg = sbstar.expand()
+templatesb = TemplateSB(template_stg)
+expanded_stg = templatesb.expand()
 
 sys.stdout.write(expanded_stg)

@@ -1,7 +1,7 @@
 """
-Tests for SbStar.
+Tests for TemplateSB.
 """
-from sbstar import SbStar, PROCESSOR_NAME, Substituter,  \
+from templatesb import TemplateSB, PROCESSOR_NAME, Substituter,  \
     LINE_TRAN, LINE_DEFN, ESCAPE_STG, LINE_SUBS
 
 import copy
@@ -127,34 +127,34 @@ class TestSubtituter(unittest.TestCase):
 class TestSbstar(unittest.TestCase):
 
   def setUp(self):
-    self.sbstar = SbStar(TEMPLATE_STG2)
+    self.templatesb = TemplateSB(TEMPLATE_STG2)
 
   def testConstructor(self):
     if IGNORE_TEST:
       return
-    self.assertTrue(len(self.sbstar._lines) > 0)
+    self.assertTrue(len(self.templatesb._lines) > 0)
 
   def testClassifyLine(self):
     if IGNORE_TEST:
       return
-    self.sbstar._current_line = SUBSTITUTION1
-    self.assertEqual(self.sbstar._classifyLine(), LINE_TRAN)
-    self.sbstar._current_line = DEFINITIONS_LINE
-    self.assertEqual(self.sbstar._classifyLine(), LINE_DEFN)
-    self.sbstar._current_line = SUBSTITUTION2
-    self.assertEqual(self.sbstar._classifyLine(), LINE_SUBS)
+    self.templatesb._current_line = SUBSTITUTION1
+    self.assertEqual(self.templatesb._classifyLine(), LINE_TRAN)
+    self.templatesb._current_line = DEFINITIONS_LINE
+    self.assertEqual(self.templatesb._classifyLine(), LINE_DEFN)
+    self.templatesb._current_line = SUBSTITUTION2
+    self.assertEqual(self.templatesb._classifyLine(), LINE_SUBS)
 
   def testErrorMsg(self):
     if IGNORE_TEST:
       return
     with self.assertRaises(ValueError):
-      self.sbstar._errorMsg("")
+      self.templatesb._errorMsg("")
 
   def testGetNextLine(self):
     if IGNORE_TEST:
       return
-    sbstar = SbStar(TEMPLATE_STG2)
-    line = sbstar._getNextLine()
+    templatesb = TemplateSB(TEMPLATE_STG2)
+    line = templatesb._getNextLine()
     lines = []
     idx = 0
     expecteds = TEMPLATE_STG2.split('\n')
@@ -163,7 +163,7 @@ class TestSbstar(unittest.TestCase):
       idx += 1
       lines.append(line)
       self.assertEqual(line, expected)
-      line = sbstar._getNextLine()
+      line = templatesb._getNextLine()
     expected = len(expecteds)
     self.assertEqual(expected, len(lines))
 
@@ -173,24 +173,24 @@ class TestSbstar(unittest.TestCase):
     stg = '''this \
     is a \
     continuation.'''
-    sbstar = SbStar(stg)
-    line = sbstar._getNextLine()
+    templatesb = TemplateSB(stg)
+    line = templatesb._getNextLine()
     self.assertTrue("is a" in line)
     self.assertTrue("continuation" in line)
-    line = sbstar._getNextLine()
+    line = templatesb._getNextLine()
     self.assertIsNone(line)
 
   def testMakeVariableDefinitions(self):
     if IGNORE_TEST:
       return
-    self.sbstar._current_line = DEFINITIONS_LINE
-    self.sbstar._makeVariableDefinitions()
-    self.assertEqual(DEFINITIONS, self.sbstar._definitions)
+    self.templatesb._current_line = DEFINITIONS_LINE
+    self.templatesb._makeVariableDefinitions()
+    self.assertEqual(DEFINITIONS, self.templatesb._definitions)
 
   def testExpand(self):
     if IGNORE_TEST:
       return
-    lines = self.sbstar.expand()
+    lines = self.templatesb.expand()
     for val in DEFINITIONS['{a}']:
       self.assertTrue("J%s1:" % val in lines)
 
@@ -204,10 +204,10 @@ class TestSbstar(unittest.TestCase):
     template_reaction = "J{c}1: S{c}1 -> S{c}2; k1*S{c}1"
     template_lines = '''%s
     %s''' % (definition_line, template_reaction)
-    sbstar1 = SbStar(template_lines)
-    result1 = sbstar1.expand()
-    sbstar2 = SbStar(template_reaction)
-    result2 = sbstar2.expand()
+    templatesb1 = TemplateSB(template_lines)
+    result1 = templatesb1.expand()
+    templatesb2 = TemplateSB(template_reaction)
+    result2 = templatesb2.expand()
     self.assertTrue(result1.index(result2) > 0)
 
   def testExpandErrorInDefinition(self):
@@ -215,8 +215,8 @@ class TestSbstar(unittest.TestCase):
       return
     for template in [BAD_TEMPLATE1]:
       with self.assertRaises(ValueError):
-        sbstar = SbStar(template)
-        result = sbstar.expand()
+        templatesb = TemplateSB(template)
+        result = templatesb.expand()
 
   def testCase1(self):
     if IGNORE_TEST:
@@ -224,11 +224,11 @@ class TestSbstar(unittest.TestCase):
     template_reaction = '''
     J{x,y,z}: S3{x,y,z} -> S4{x,y,z}; k2{x,y,z}*S3{x,y,z}
     '''
-    sbstar = SbStar(template_reaction)
-    result = sbstar.expand()
+    templatesb = TemplateSB(template_reaction)
+    result = templatesb.expand()
 
   def testFile(self):
-    SbStar.processFile("../Example/sample.tmpl", "/tmp/out.mdl")
+    TemplateSB.processFile("../Example/sample.tmpl", "/tmp/out.mdl")
 
 
 if __name__ == '__main__':
