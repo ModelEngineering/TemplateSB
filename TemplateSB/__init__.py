@@ -1,3 +1,3 @@
 """
-Module for SbStar
+Module for TemplateSB
 """
