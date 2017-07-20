@@ -198,12 +198,13 @@ class TemplateSB(object):
     error = "on line %d. %s" % (self._lineno, msg)
     raise ValueError(error)
 
-  def _getNextLine(self):
+  def _getNextLine(self, strip=True):
     """
     Gets the next line, handling continued lines.
     State used:
       reads: _lineno, _lines
       writes: _current_line, _lineno
+    :parm bool strip: flag to indicate if white space should be stripped
     :sideeffects: self._current_line, self._lineno
     :return str: Current line with continuations
     """
@@ -211,7 +212,10 @@ class TemplateSB(object):
     while self._lineno < len(self._lines):
       if self._current_line is None:
         self._current_line = ""
-      text = self._lines[self._lineno].strip()
+      if strip:
+        text = self._lines[self._lineno].strip()
+      else:
+        text = self._lines[self._lineno]
       self._lineno += 1
       if len(text) == 0:
         continue
@@ -291,7 +295,7 @@ class TemplateSB(object):
           if len(expansion) > 1:
             expansions.append(TemplateSB._makeComment(line))
           expansions.extend(expansion)
-      line = self._getNextLine()
+      line = self._getNextLine(strip= not is_escape)
     return "\n".join(expansions)
 
   def get(self):

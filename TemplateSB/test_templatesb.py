@@ -27,17 +27,17 @@ TEMPLATE_STG1 = '''
 %s
 %s
 %s
-''' % (TEMPLATE_INITIAL, SUBSTITUTION1, ESCAPE_END)
+''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION1)
 TEMPLATE_STG2 = '''
 %s
 %s
 %s
-''' % (TEMPLATE_INITIAL, SUBSTITUTION2, ESCAPE_END)
-TEMPLATE_STG2 = '''
+''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION2)
+TEMPLATE_STG3 = '''
 %s
 %s
 %s
-''' % (TEMPLATE_INITIAL, SUBSTITUTION3, ESCAPE_END)
+''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION3)
 # Substitution
 # Definition error
 TEMPLATE_BAD = '''
@@ -173,36 +173,28 @@ class TestTemplateSB(unittest.TestCase):
     self.assertIsNone(line)
 
   def testExecuteStatements(self):
-    #if IGNORE_TEST:
-    #  return
+    if IGNORE_TEST:
+      return
     template = TemplateSB(TEMPLATE_EXECUTE)
     self.assertEqual(len(template._definitions.keys()), 0)
     result = template.expand()
     self.assertEqual(result.count('\n'), TEMPLATE_EXECUTE.count('\n'))
-    import pdb; pdb.set_trace()
 
-  def testExpand(self):
-    if IGNORE_TEST:
-      return
+  def _testExpand(self, template, variable):
+    """
+    :param str template: template to expand
+    :param str variable: variable to check
+    """
+    self.templatesb = TemplateSB(template)
     lines = self.templatesb.expand()
-    for val in DEFINITIONS['{a}']:
+    for val in DEFINITIONS[variable]:
       self.assertTrue("J%s1:" % val in lines)
 
-  def testExpandWithAndWIthoutDefinition(self):
-    if IGNORE_TEST:
-      return
-    definitions = {'{a}': ['a', 'b', 'c'], '{m}': ['1', '2', '3'],
-        '{c}': ['c', '']}
-    definition_line = "%s %s Version 1.0 %s" %  \
-        (ESCAPE_STG, PROCESSOR_NAME, str(definitions))
-    template_reaction = "J{c}1: S{c}1 -> S{c}2; k1*S{c}1"
-    template_lines = '''%s
-    %s''' % (definition_line, template_reaction)
-    templatesb1 = TemplateSB(template_lines)
-    result1 = templatesb1.expand()
-    templatesb2 = TemplateSB(template_reaction)
-    result2 = templatesb2.expand()
-    self.assertTrue(result1.index(result2) > 0)
+  def testExpand(self):
+    #if IGNORE_TEST:
+    #  return
+    self._testExpand(TEMPLATE_STG2, 'a')
+    self._testExpand(TEMPLATE_STG3, 'c')
 
   def testExpandErrorInDefinition(self):
     if IGNORE_TEST:
