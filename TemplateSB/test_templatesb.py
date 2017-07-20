@@ -1,44 +1,53 @@
 """
 Tests for TemplateSB.
+1. Handle badly form code better
+2. Test for case of no definitions
 """
-from templatesb import TemplateSB, PROCESSOR_NAME, Substituter,  \
-    LINE_TRAN, LINE_DEFN, ESCAPE_STG, LINE_SUBS
+from templatesb import TemplateSB, Substituter,  \
+    LINE_TRAN, LINE_SUBS, ESCAPE_START, ESCAPE_END
 
 import copy
 import unittest
 import numpy as np
 
 
-IGNORE_TEST = False
-DEFINITIONS = {'{a}': ['a', 'b', 'c'], '{m}': ['1', '2', '3'],
-    '{c}': ['c', '']}
-BAD_DEFINITIONS1 = {'{a}': ['a', 'b', 'c'], '{m}': ['1', '2', '3'],
-    '{c': ['c', '']}
-DEFINITIONS_LINE = "%s %s Version 1.0 %s" %  \
-    (ESCAPE_STG, PROCESSOR_NAME, str(DEFINITIONS))
-BAD_DEFINITIONS_LINE1 = "%s %s Version 1.0 %s" %  \
-    (ESCAPE_STG, PROCESSOR_NAME, str(BAD_DEFINITIONS1))
+IGNORE_TEST = True
+DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3'],
+    'c': ['c', '']}
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
 SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
 SUBSTITUTION3 = "J{c}1: S{c}1 -> S{c}2; k1*S{c}1"
+TEMPLATE_INITIAL = '''%s
+DEFINITIONS = %s
+[api.addDefinition(k,v) for k,v in DEFINITIONS.items()]'''  \
+    % (ESCAPE_START, str(DEFINITIONS))
+TEMPLATE_EXECUTE = '''%s
+%s''' % (TEMPLATE_INITIAL, ESCAPE_END)
 TEMPLATE_STG1 = '''
 %s
-# No substitution
 %s
-''' % (DEFINITIONS_LINE, SUBSTITUTION1)
-TEMPLATE_STG2 = '''%s
+%s
+''' % (TEMPLATE_INITIAL, SUBSTITUTION1, ESCAPE_END)
+TEMPLATE_STG2 = '''
+%s
+%s
+%s
+''' % (TEMPLATE_INITIAL, SUBSTITUTION2, ESCAPE_END)
+TEMPLATE_STG2 = '''
+%s
+%s
+%s
+''' % (TEMPLATE_INITIAL, SUBSTITUTION3, ESCAPE_END)
 # Substitution
-%s''' % (DEFINITIONS_LINE, SUBSTITUTION2)
-TEMPLATE_STG3 = '''
-# Missing template variable definition
-%s''' % SUBSTITUTION2
-BAD_TEMPLATE1 = '''%s
 # Definition error
+TEMPLATE_BAD = '''
+{{
+DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3'],
+    'c': ['c', '']}
+[api.addDefinition(k,v) for k,v in DEFINITIONS]
 J{z}1: S{z}1 -> S{d}2; k1*S{d}1
-''' % (BAD_DEFINITIONS_LINE1)
-TEMPLATE_STG5 = '''%s
-# Substitution
-%s''' % (DEFINITIONS_LINE, SUBSTITUTION3)
+}}
+'''
 
 
 def isSubDict(dict_super, dict_sub):
@@ -54,7 +63,6 @@ def isSubDict(dict_super, dict_sub):
     if not dict_sub[key] == dict_super[key]:
       return False
   return True
-
 
 
 #############################
@@ -97,34 +105,18 @@ class TestSubtituter(unittest.TestCase):
     if IGNORE_TEST:
       return
     substituter = Substituter(DEFINITIONS)
-    strings = TEMPLATE_STG1.split('\n')
-    new_string = ('\n').join(strings[2:])
-    result = substituter.replace(new_string)
-    self.assertEqual(result[0], new_string)
+    result = substituter.replace(SUBSTITUTION1)
+    self.assertEqual(result[0], SUBSTITUTION1)
     result = substituter.replace(SUBSTITUTION2)
-    expected = len(DEFINITIONS['{a}'])
+    expected = len(DEFINITIONS['a'])
     self.assertEqual(len(result), expected)
-
-  def testUpdateDefinitions(self):
-    if IGNORE_TEST:
-      return
-    stg = "x{c} -> x + { 1, 2,3 }; k*{c}"
-    self.substituter._updateDefinitions(stg)
-    definitions = copy.deepcopy(self.substituter._definitions)
-    self.assertTrue(isSubDict(definitions, DEFINITIONS))
-    new_definitions = {'{c}': ['c', ''], '{1,2,3}': ['1', '2', '3']}
-    self.assertTrue(isSubDict(definitions, new_definitions))
-    stg = "x{a} -> x{a} + { 1, 2,3 }; k*{a}"
-    cur_defns = copy.deepcopy(self.substituter._definitions)
-    self.substituter._updateDefinitions(stg)
-    self.assertEqual(cur_defns, self.substituter._definitions)
     
 
 #############################
 # Tests
 #############################
 # pylint: disable=W0212,C0111,R0904
-class TestSbstar(unittest.TestCase):
+class TestTemplateSB(unittest.TestCase):
 
   def setUp(self):
     self.templatesb = TemplateSB(TEMPLATE_STG2)
@@ -180,12 +172,14 @@ class TestSbstar(unittest.TestCase):
     line = templatesb._getNextLine()
     self.assertIsNone(line)
 
-  def testMakeVariableDefinitions(self):
-    if IGNORE_TEST:
-      return
-    self.templatesb._current_line = DEFINITIONS_LINE
-    self.templatesb._makeVariableDefinitions()
-    self.assertEqual(DEFINITIONS, self.templatesb._definitions)
+  def testExecuteStatements(self):
+    #if IGNORE_TEST:
+    #  return
+    template = TemplateSB(TEMPLATE_EXECUTE)
+    self.assertEqual(len(template._definitions.keys()), 0)
+    result = template.expand()
+    self.assertEqual(result.count('\n'), TEMPLATE_EXECUTE.count('\n'))
+    import pdb; pdb.set_trace()
 
   def testExpand(self):
     if IGNORE_TEST:
@@ -228,6 +222,8 @@ class TestSbstar(unittest.TestCase):
     result = templatesb.expand()
 
   def testFile(self):
+    if IGNORE_TEST:
+      return
     TemplateSB.processFile("../Example/sample.tmpl", "/tmp/out.mdl")
 
 

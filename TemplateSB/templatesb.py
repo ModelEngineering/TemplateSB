@@ -1,17 +1,26 @@
 '''Class for processing templates. See README for syntax.'''
 
 """
-1. Completed draft of code for implicit definitions
-2. Tests for different parsing cases
+Parses text to expand based on values of template variables.
+Lines:
+  Begins with {{ - starts an escape of python code
+  Begins with }} - ends an escape of python code
+
+Notes
+  1. Define a template variable as being without the '{}'
+    a. Change subtituter
+    b. Change expand
+  2. Can't do implicit definitions if have expressions?
 """
 
+from api import Api
 import re
 import fileinput
 import sys
 
 
-ESCAPE_STG = '#!'
-PROCESSOR_NAME = "TemplateSB"
+ESCAPE_START = "{{"
+ESCAPE_END = "}}"
 VERSION = '1.1'
 SPLIT_STG = "\n"
 COMMENT_STG = "#"
@@ -19,8 +28,9 @@ CONTINUED_STG = "\\"  # Indicates a continuation follows
 VARIABLE_START = "{"
 VARIABLE_END = "}"
 LINE_TRAN = 1  # Transparent - nothing to process (comment line, no template variable)
-LINE_DEFN = 2  # Variable definition - variable definition line
 LINE_SUBS = 3  # Substitution line
+LINE_CODE_START = 4  # Starts a code escape
+LINE_CODE_END = 5
 SEP = ","  # Separator for template variables
 TOKEN_ESCAPE = 0
 TOKEN_PROCESSOR = 1
@@ -35,24 +45,29 @@ class Substituter(object):
   considered for each target.
   """
 
-  def __init__(self, definitions):
+  def __init__(self, definitions,
+       left_delim=VARIABLE_START, right_delim=VARIABLE_END):
     """
     :param dict definitions: key is the string to replace, values are the substitutions
+    :param char left_delim:
+    :param char right_delim:
     """
     self._definitions = definitions
+    self._left_delim = left_delim
+    self._right_delim = right_delim
 
   @classmethod
   def makeSubstitutionList(cls, definitions):
     """
     Creates a list of substitutions from a substitution defintion.
     Suppose that the defintions are the dictionary
-    {'{a}': ['a1', 'a2'], '{b}': ['b1', 'b2', 'b3']}.
+    {'a': ['a1', 'a2'], 'b': ['b1', 'b2', 'b3']}.
     Then a substituion list will be a list of dictionaries, each of which
     has a key for the two targets ('a' and 'b') and every combination of
     value for the keys. Assume the default left and right delimiters. In this case:
-      [ {'{a}': 'a1', '{b}': 'b1'}, ['{a}': 'a2', '{b}': 'b1'},
-        {'{a}': 'a1', '{b}': 'b2'}, ['{a}': 'a2', '{b}': 'b2'},
-        {'{a}': 'a1', '{b}': 'b3'}, ['{a}': 'a2', '{b}': 'b3'}
+      [ {'a': 'a1', 'b': 'b1'}, ['a': 'a2', 'b': 'b1'},
+        {'a': 'a1', 'b': 'b2'}, ['a': 'a2', 'b': 'b2'},
+        {'a': 'a1', 'b': 'b3'}, ['a': 'a2', 'b': 'b3'}
       ]
     :param dict definitions: key is target name, value is list of replacements
     :return list-of-dict:
@@ -69,65 +84,38 @@ class Substituter(object):
       substitutions = list(accum_list)
     return [d for d in substitutions if len(d.keys()) > 0]
 
-  def _getTemplateVariables(self, stg, 
-       left_delim=VARIABLE_START, right_delim=VARIABLE_END):
+  def _getTemplateVariables(self, stg):
     """
     Finds the template variables in the line, those variables between 
     the delimiters.
     :param str stg:
-    :param char left_delim:
-    :param char right_delim:
-    :return list-of-str:
+    :return list-of-str: Template variables enclosed in delimiters
     """
-    pattern_str = "\%s[\w\s,]+\%s" % (left_delim, right_delim)  # Single template variable
+    pattern_str = "\%s[\w\s,]+\%s"  \
+       % (self._left_delim, self._right_delim)  # Single template variable
     pat = re.compile(pattern_str)  # Single template variable
     raw_strings = pat.findall(stg)
     raw_variables =  \
         [r.strip().replace(' ', '')  for r in raw_strings]
     variables = [x for x in set(raw_variables)]
     return variables
-
-  def _updateDefinitions(self, stg):
-    """
-    Creates the dictionary definition the implicit substitutions for the template variables.
-    There are two cases. First, there is no comma in the variable name, such as
-    {ll}. In this case, the substituitions are either "ll" or "".
-    The second case is there is a list of values, such as "{1,3,55a}". Here
-    the substions are are "1", "3", and "55a".
-    :param str stg: line to be parsed
-    """
-    template_variables = self._getTemplateVariables(stg)
-    result = {}
-    for var in template_variables:
-      # Ignore the variable if it is already defined
-      if var in self._definitions.keys():
-        continue
-      trim_var = var[1:-1]
-      # Not already definied
-      if trim_var.find(SEP) > -1:
-        # Is a list
-        values = trim_var.split(SEP)
-      else:
-        # Singleton value
-        values = [trim_var, ""]
-      result[var] = values
-    self._definitions.update(result)
       
   def replace(self, stg):
     """
     Replaces all instances of target strings in the line,
     eliminating redundant lines.
-    :param str stg: string where replacements are done
+    :param str stg: string where replacements are done. includes delimiter.
     :return list-of-str:
     """
     replacements = []
     cls = Substituter
-    self._updateDefinitions(stg)
     substitutions = cls.makeSubstitutionList(self._definitions)
     for substitution_dict in substitutions:
       replaced_string = stg
       for target, replc in substitution_dict.items():
-        new_string = replaced_string.replace(target, replc)
+        full_target = "%s%s%s" % (self._left_delim,
+            target, self._right_delim)
+        new_string = replaced_string.replace(full_target, replc)
         replaced_string = new_string
       if replaced_string not in replacements:
         replacements.append(replaced_string)
@@ -147,11 +135,17 @@ class TemplateSB(object):
     results = rr.simulate(start, end, samples)
   """
   def __init__(self, template_string):
+    """
+    :param str template_string: string containing template variables
+        and template escape statements to execute
+    """
     self._template_string = template_string
     self._lines = self._template_string.split(SPLIT_STG)
     self._definitions = {}  # Dictionary of template variables and values
     self._lineno = 0
     self._current_line = None  # Complete line extracted from input
+    self._api = Api()
+    self._namespace = {'api': self._api}
 
   @classmethod
   def processFile(cls, inpath, outpath):
@@ -173,8 +167,9 @@ class TemplateSB(object):
     """
     Classifies a line as:
       LINE_TRAN: Transparent - nothing to process (comment line, no template variable)
-      LINE_DEFN: Variable definition - variable definition line
       LINE_SUBS: Substitution line
+      LINE_CODE_START: Start a code escape
+      LINE_CODE_END: End a code escape
     State used:
       reads: _current_line
     :return int: see LINE_* for interpretation
@@ -182,10 +177,12 @@ class TemplateSB(object):
     text = self._current_line.strip()
     if len(text) == 0:
       result = LINE_TRAN
-    elif text[0:len(ESCAPE_STG)] == ESCAPE_STG:
-      result = LINE_DEFN
     elif text[0] == COMMENT_STG or len(text) == 0:
       result = LINE_TRAN
+    elif text[0:2] == ESCAPE_START:
+      result = LINE_CODE_START
+    elif text[0:2] == ESCAPE_END:
+      result = LINE_CODE_END
     elif text.count(VARIABLE_START) == 0 and  \
         text.count(VARIABLE_END) == 0:
       result = LINE_TRAN
@@ -225,45 +222,23 @@ class TemplateSB(object):
         break
     return self._current_line
 
-  def _makeVariableDefinitions(self):
-    """
-    Extract the variable definitions from the input.
-    State used:
-      reads: _current_line
-      writes: _definitions
-    :sideeffects self._definitions:
-    """
-    tokens = self._current_line.split(' ')
-    if tokens[TOKEN_ESCAPE] != ESCAPE_STG:
-      raise RuntimeError("Not a variable definition line.")
-    if tokens[TOKEN_PROCESSOR] != PROCESSOR_NAME:
-      self._errorMsg("Could not find template processor")
-    version = tokens[TOKEN_VERSION]
-    try:
-      if float(version) > float(VERSION):
-        self._errorMsg("Version number not recognized")
-    except ValueError:
-      self._errorMsg("Version number not recognized")
-    # Valid Variable Definitions line
-    definitions = " ".join(tokens[TOKEN_DEFSTART:])
-    # Verify that this is a valid Python dict
-    try:
-      #pylint: disable=W0123
-      self._definitions = eval(definitions)
-    #pylint: disable=W0703
-    except Exception:
-      self._errorMsg("Invalid variable definitions.")
-    # Verify the format of the template variables
-    for key in self._definitions.keys():
-      if not key[0] == VARIABLE_START or  \
-          not key[-1] == VARIABLE_END:
-        msg = "Template variable '%s' must be enclosed in %s, %s"  \
-            % (key, VARIABLE_START, VARIABLE_END)
-        self._errorMsg(msg)
-
   @staticmethod
   def _makeComment(line):
     return "%s%s" % (COMMENT_STG, line)
+
+  def _execute_statements(self, statements):
+    """
+    Executes the statements and updates the variable
+    definitions.
+    :param list-of-str statements:
+    """
+    program = '\n'.join(statements)
+    try:
+      exec(program, self._namespace)
+    except Exception as e:
+      msg = "***Error %s executing:\n %s" % (e.message, program)
+      raise ValueError(msg)
+    self._definitions = self._namespace['api'].getDefinitions()
 
   def expand(self):
     """
@@ -282,27 +257,40 @@ class TemplateSB(object):
     expansions = []
     substituter = Substituter({})
     line = self._getNextLine()
+    statements = []
+    is_escape = False
     while line is not None:  # End of input if None
       line_type = self._classifyLine()
-      if line_type == LINE_TRAN:
-        expansions.append(line)
-      elif line_type == LINE_DEFN:
-        # Process definitions of template variables
-        expansions.append(TemplateSB._makeComment(line.strip()))
-        self._makeVariableDefinitions()
-        substituter = Substituter(self._definitions)
-      else:
-        # Do the variable substitutions
-        expansion = substituter.replace(line)
-        is_ok = all([False if (VARIABLE_START in e)
-                     or (VARIABLE_END in e)
-                     else True for e in expansion])
-        if not is_ok:
-          msg = "Undefined template variable in line:\n%s" % line
-          self._errorMsg(msg)
-        if len(expansion) > 1:
+      if is_escape:
+        if line_type == LINE_CODE_END:
+          is_escape = False
+          self._execute_statements(statements)  # updates self._definitions
+          statements = []
+          substituter = Substituter(self._definitions)
           expansions.append(TemplateSB._makeComment(line))
-        expansions.extend(expansion)
+        else:
+          statements.append(line)
+          expansions.append(TemplateSB._makeComment(line))
+      # Not a code escape
+      else:
+        if line_type == LINE_TRAN:
+          expansions.append(line)
+        elif line_type == LINE_CODE_START:
+          is_escape = True
+          expansions.append(TemplateSB._makeComment(line))
+        else:
+          # Do the variable substitutions
+          expansion = substituter.replace(line)
+          is_ok = all([False if (VARIABLE_START in e)
+                       or (VARIABLE_END in e)
+                       else True for e in expansion])
+          if not is_ok:
+            import pdb; pdb.set_trace()
+            msg = "Undefined template variable in line:\n%s" % line
+            self._errorMsg(msg)
+          if len(expansion) > 1:
+            expansions.append(TemplateSB._makeComment(line))
+          expansions.extend(expansion)
       line = self._getNextLine()
     return "\n".join(expansions)
 
