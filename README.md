@@ -55,11 +55,18 @@ A line is continued if it ends with a backslash (“\”).
 Below is a representation in templates of the 64 methylation 
 reactions (24 reactions for each of
 J1\* and J2\* and 8 reactions for each of 
-J3\*2\* and J3\*3\*) as required by the Spiro model. 
+J3\*2\* and J3\*3\*) as required by the Spiro model.
+TemplateSB uses a Python code to specify how processing should proceed
+based on opertions on the object api.
+In particular, api.addDefinitions takes a dictionary as its arguement.
+The keys are template variables; the associated values are the possible
+values that can be assigned to the template variable.
 
-  <p>#! TemplateSB Version 1.0 {‘p’:[‘p’,‘’], ‘L’:[‘L’,‘’], ‘r’:[‘R’,‘’], \ </p>
+  <p>{{
 
-  ‘m’:[‘2’, ‘3’, ‘4’]}
+   api.addDefinitions({‘p’:[‘p’,‘’], ‘L’:[‘L’,‘’], ‘r’:[‘R’,‘’], ‘m’:[‘2’, ‘3’, ‘4’]})
+
+   }}
  
   J1{L}{m}{p}: {L}T{m}{p} + R -> {L}T{m}{p}R; k1{m} \* {L}T{m}{p} \* R
   
