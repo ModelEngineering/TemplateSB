@@ -289,7 +289,6 @@ class TemplateSB(object):
                        or (VARIABLE_END in e)
                        else True for e in expansion])
           if not is_ok:
-            import pdb; pdb.set_trace()
             msg = "Undefined template variable in line:\n%s" % line
             self._errorMsg(msg)
           if len(expansion) > 1:

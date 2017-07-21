@@ -42,6 +42,8 @@ TEMPLATE_STG3 = '''%s
 %s
 %s
 ''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION3)
+TEMPLATE_NO_DEFINITION = '''%s
+''' % (SUBSTITUTION3)
 # Substitution
 # Definition error
 TEMPLATE_BAD = '''
@@ -208,6 +210,13 @@ class TestTemplateSB(unittest.TestCase):
     with self.assertRaises(ValueError):
       templatesb = TemplateSB(TEMPLATE_BAD)
       result = templatesb.expand()
+
+  def testNoDefinintion(self):
+    if IGNORE_TEST:
+      return
+    self.templatesb = TemplateSB(TEMPLATE_NO_DEFINITION)
+    with self.assertRaises(ValueError):
+      lines = self.templatesb.expand()
 
   def testFile(self):
     if IGNORE_TEST:
