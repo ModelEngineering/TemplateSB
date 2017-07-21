@@ -1,6 +1,9 @@
 '''Run time for evaluating python codes in template'''
 
 
+import numpy as np
+
+
 class Api(object):
 
   def __init__(self):
@@ -9,22 +12,22 @@ class Api(object):
     self._constraints = []
     self._primaries = {}
 
-  def addDefinition(self, name, values, primary=None):
+  def addDefinitions(self, name_value_dict, primary=None):
     """
-    :param str name: name being defined
-    :param list values: values assignable to the name
-    :param str primary: variable that is used to
-       aligned this variable
+    :param dict name_value_dict: key is name
+    :param str primary: the values in this dictionary
+       should be 'aligned' with the primary
     """
-    self._definitions[name] = values
+    for key, values in name_value_dict.items():
+      self._definitions[key] = values
     if primary is None:
       self._primaries[primary] = []
     if primary is not None:
-      if len(self._definitions[primary])  \
-          != len(self._definitions[name]):
-        raise ValueError("Length mismatch between %s and %s"
-            % (name, dependent))
-      self._primaries[primary].append(name)
+      lengths = [len(v) for v in name_value_dict(k) for v,k in name_value_dict]
+      if np.std(lengths) != 0:
+        raise ValueError("Non-None primary but non-equal length variables")
+      for key in name_value_dict:
+        self._primaries[primary].append(key)
 
   def getDefinitions(self):
     """

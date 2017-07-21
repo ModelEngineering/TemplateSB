@@ -11,16 +11,17 @@ import unittest
 import numpy as np
 
 
-IGNORE_TEST = True
+IGNORE_TEST = False
 DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3'],
     'c': ['c', '']}
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
 SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
 SUBSTITUTION3 = "J{c}1: S{c}1 -> S{c}2; k1*S{c}1"
 TEMPLATE_INITIAL = '''%s
-DEFINITIONS = %s
-[api.addDefinition(k,v) for k,v in DEFINITIONS.items()]'''  \
+api.addDefinitions(%s)'''  \
     % (ESCAPE_START, str(DEFINITIONS))
+TEMPLATE_INITIAL_BAD = '''%s
+api.addDefinitions({'a':})'''  % ESCAPE_START
 TEMPLATE_EXECUTE = '''%s
 %s''' % (TEMPLATE_INITIAL, ESCAPE_END)
 TEMPLATE_STG1 = '''
@@ -28,6 +29,11 @@ TEMPLATE_STG1 = '''
 %s
 %s
 ''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION1)
+TEMPLATE_BAD = '''
+%s
+%s
+%s
+''' % (TEMPLATE_INITIAL_BAD, ESCAPE_END, SUBSTITUTION1)
 TEMPLATE_STG2 = '''
 %s
 %s
@@ -150,6 +156,7 @@ class TestTemplateSB(unittest.TestCase):
     lines = []
     idx = 0
     expecteds = TEMPLATE_STG2.split('\n')
+    import pdb; pdb.set_trace()
     while line is not None:
       expected = expecteds[idx]
       idx += 1
@@ -191,27 +198,17 @@ class TestTemplateSB(unittest.TestCase):
       self.assertTrue("J%s1:" % val in lines)
 
   def testExpand(self):
-    #if IGNORE_TEST:
-    #  return
+    if IGNORE_TEST:
+      return
     self._testExpand(TEMPLATE_STG2, 'a')
     self._testExpand(TEMPLATE_STG3, 'c')
 
   def testExpandErrorInDefinition(self):
     if IGNORE_TEST:
       return
-    for template in [BAD_TEMPLATE1]:
-      with self.assertRaises(ValueError):
-        templatesb = TemplateSB(template)
-        result = templatesb.expand()
-
-  def testCase1(self):
-    if IGNORE_TEST:
-      return
-    template_reaction = '''
-    J{x,y,z}: S3{x,y,z} -> S4{x,y,z}; k2{x,y,z}*S3{x,y,z}
-    '''
-    templatesb = TemplateSB(template_reaction)
-    result = templatesb.expand()
+    with self.assertRaises(ValueError):
+      templatesb = TemplateSB(TEMPLATE_BAD)
+      result = templatesb.expand()
 
   def testFile(self):
     if IGNORE_TEST:
