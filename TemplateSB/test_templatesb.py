@@ -4,7 +4,8 @@ Tests for TemplateSB.
 2. Test for case of no definitions
 """
 from templatesb import TemplateSB, Substituter,  \
-    LINE_TRAN, LINE_SUBS, ESCAPE_START, ESCAPE_END
+    LINE_TRAN, LINE_SUBS, ESCAPE_START, ESCAPE_END,  \
+    LINE_CODE_START, LINE_CODE_END
 
 import copy
 import unittest
@@ -29,18 +30,15 @@ TEMPLATE_STG1 = '''
 %s
 %s
 ''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION1)
-TEMPLATE_BAD = '''
-%s
+TEMPLATE_BAD = '''%s
 %s
 %s
 ''' % (TEMPLATE_INITIAL_BAD, ESCAPE_END, SUBSTITUTION1)
-TEMPLATE_STG2 = '''
-%s
+TEMPLATE_STG2 = '''%s
 %s
 %s
 ''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION2)
-TEMPLATE_STG3 = '''
-%s
+TEMPLATE_STG3 = '''%s
 %s
 %s
 ''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION3)
@@ -135,10 +133,12 @@ class TestTemplateSB(unittest.TestCase):
   def testClassifyLine(self):
     if IGNORE_TEST:
       return
+    self.templatesb._current_line = ESCAPE_START
+    self.assertEqual(self.templatesb._classifyLine(), LINE_CODE_START)
+    self.templatesb._current_line = ESCAPE_END
+    self.assertEqual(self.templatesb._classifyLine(), LINE_CODE_END)
     self.templatesb._current_line = SUBSTITUTION1
     self.assertEqual(self.templatesb._classifyLine(), LINE_TRAN)
-    self.templatesb._current_line = DEFINITIONS_LINE
-    self.assertEqual(self.templatesb._classifyLine(), LINE_DEFN)
     self.templatesb._current_line = SUBSTITUTION2
     self.assertEqual(self.templatesb._classifyLine(), LINE_SUBS)
 
@@ -156,7 +156,6 @@ class TestTemplateSB(unittest.TestCase):
     lines = []
     idx = 0
     expecteds = TEMPLATE_STG2.split('\n')
-    import pdb; pdb.set_trace()
     while line is not None:
       expected = expecteds[idx]
       idx += 1
