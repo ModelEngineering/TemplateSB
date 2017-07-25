@@ -1,7 +1,5 @@
 """
 Tests for TemplateSB.
-1. Handle badly form code better
-2. Test for case of no definitions
 """
 from templatesb import TemplateSB, Substituter,  \
     LINE_TRAN, LINE_SUBS, ESCAPE_START, ESCAPE_END,  \
@@ -10,6 +8,7 @@ from templatesb import TemplateSB, Substituter,  \
 import copy
 import unittest
 import numpy as np
+import os
 
 
 IGNORE_TEST = False
@@ -95,7 +94,8 @@ class TestSubtituter(unittest.TestCase):
     expected = np.prod([len(v) for v in definitions.values()])
     self.assertEqual(len(substitution_list), expected)
 
-  def testGetTemplateVariables(self):
+  def testGetTemplateExpressions(self):
+    return
     if IGNORE_TEST:
       return
     variables = self.substituter._getTemplateVariables("x{a} -> x + {a}; k*{a}")
@@ -221,7 +221,11 @@ class TestTemplateSB(unittest.TestCase):
   def testFile(self):
     if IGNORE_TEST:
       return
-    TemplateSB.processFile("../Example/sample.tmpl", "/tmp/out.mdl")
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    parent_path = os.path.dirname(dir_path)
+    src_path = os.path.join(parent_path, "Example")
+    src_path = os.path.join(src_path, "sample.tmpl")
+    TemplateSB.processFile(src_path, "/tmp/out.mdl")
 
 
 if __name__ == '__main__':

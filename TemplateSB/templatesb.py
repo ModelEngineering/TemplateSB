@@ -11,6 +11,10 @@ Notes
     a. Change subtituter
     b. Change expand
   2. Can't do implicit definitions if have expressions?
+
+1. Test getTemplateExpressions (substituter)
+2. Evaluate template expressions and extend the set of substitions
+   done by the substituter?
 """
 
 from api import Api
@@ -84,21 +88,22 @@ class Substituter(object):
       substitutions = list(accum_list)
     return [d for d in substitutions if len(d.keys()) > 0]
 
-  def _getTemplateVariables(self, stg):
+  def getTemplateExpressions(self, stg):
     """
-    Finds the template variables in the line, those variables between 
-    the delimiters.
-    :param str stg:
-    :return list-of-str: Template variables enclosed in delimiters
+    Finds the template expressions in the string, 
+    the strings between the template delimiters.
+    :param str stg: string to process
+    :return list-of-str: Unique template expressions without delimiters
     """
-    pattern_str = "\%s[\w\s,]+\%s"  \
-       % (self._left_delim, self._right_delim)  # Single template variable
+    # Single template variable
+    pattern_str = "\%s[^%s]+\%s"  \
+       % (self._left_delim, self._left_delim, self._right_delim)
     pat = re.compile(pattern_str)  # Single template variable
-    raw_strings = pat.findall(stg)
-    raw_variables =  \
-        [r.strip().replace(' ', '')  for r in raw_strings]
-    variables = [x for x in set(raw_variables)]
-    return variables
+    raw_expressions = pat.findall(stg)
+    for expression in raw_expressions:
+      expression = expression[1:-1]
+    expressions = [x for x in set(raw_expressions)]
+    return expressions
       
   def replace(self, stg):
     """
