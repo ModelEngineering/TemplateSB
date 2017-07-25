@@ -52,6 +52,22 @@ the values assigned to template variables at the top of the Antimony model.
 This is done using the escape string “#!”. The declaration has the syntax of a python dictionary. 
 A line is continued if it ends with a backslash (“\”).
 
+TemplateSB responds to several commands dictating how lines should be expanded.
+Commands are enclosed in double braces ("{{" and "}}"). Supported commands are:
+{{ ExecutePython Start }} - beginning of Python codes to execute
+{{ ExecutePython End }} - end of Python codes to execute
+
+Below is a description of the function of these commands.
+
+- Python codes are used to specify template variables used in expansions.
+  This is done using the api object. For example,
+  <pre>
+  {{ ExecutePython Start }} - beginning of Python codes to execute
+  api.addDefinitions({'p': ['p', '']})
+  {{ ExecutePython End }} - end of Python codes to execute
+  </pre>
+  Defines the variable <pre>p</pre> as having the values '' and 'p'.
+
 Below is a representation in templates of the 64 methylation 
 reactions (24 reactions for each of
 J1\* and J2\* and 8 reactions for each of 
@@ -62,11 +78,10 @@ In particular, api.addDefinitions takes a dictionary as its arguement.
 The keys are template variables; the associated values are the possible
 values that can be assigned to the template variable.
 
-  <p>{{
-
-   api.addDefinitions({‘p’:[‘p’,‘’], ‘L’:[‘L’,‘’], ‘r’:[‘R’,‘’], ‘m’:[‘2’, ‘3’, ‘4’]})
-
-   }}
+  <pre>
+  {{ ExecutePython Start }}
+  api.addDefinitions({‘p’:[‘p’,‘’], ‘L’:[‘L’,‘’], ‘r’:[‘R’,‘’], ‘m’:[‘2’, ‘3’, ‘4’]})
+  {{ ExecutePython End }}
  
   J1{L}{m}{p}: {L}T{m}{p} + R -> {L}T{m}{p}R; k1{m} \* {L}T{m}{p} \* R
   
@@ -75,6 +90,7 @@ values that can be assigned to the template variable.
   J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32 \* {L}T2{p}R
   
   J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33 \* {L}T3{p}R
+  </pre>
 
 One possible extension is to permit having a python expression inside a template instance (within “{“ and “}”). This feature would eliminate one of the templated model lines in the above model by using {m+1} as a template instance.
 
