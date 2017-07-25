@@ -10,10 +10,10 @@ To illustrate this, consider a part of the chemotaxis model for E. coli in Spiro
 We focus on receptor methylation. The state of a receptor is determined by three factors: whether or not it is bound to a ligand; whether or not it is phosphorylated; and its methylation level. Methylation may occur once a receptor (in any state) is bound to CheR (herein denoted by R). The reactions for a methylation level of 2 are:
 
 <pre>
-T2R -> T3 + R; k2\*T2R
-LT2R -> LT3 + R; k2\*LT2R
-T2pR -> T3p + R; k2\*T2pR
-LT2pR -> LT3p + R; k2\*LT2pR
+T2R -> T3 + R; k2*T2R
+LT2R -> LT3 + R; k2*LT2R
+T2pR -> T3p + R; k2*T2pR
+LT2pR -> LT3p + R; k2*LT2pR
 </pre>
   
 Note that the reactions are independent of phosphorylation and ligand binding in that the kinetics constants do not change with these receptor states. To represent the complete set of methylation reactions in the Spiro model, we’d consider methylation levels of 3 and 4 as well, resulting in 12 reactions.
@@ -27,7 +27,7 @@ The template variable {p} is handled in the same way.
 Thus, the above four reactions can be expressed as a single templated reaction:
 
 <pre>
-{L}T2{p}R -> {L}T3{p} + R; k2\*{L}T2{p}R
+{L}T2{p}R -> {L}T3{p} + R; k2*{L}T2{p}R
 </pre>
 
 The template processor expands this expression into the above four reactions.
@@ -65,10 +65,10 @@ values that can be assigned to the template variable.
 api.addDefinitions({‘p’:[‘p’,‘’], ‘L’:[‘L’,‘’], ‘r’:[‘R’,‘’], ‘m’:[‘2’, ‘3’, ‘4’]})
 {{ ExecutePython End }}
  
-J1{L}{m}{p}: {L}T{m}{p} + R -> {L}T{m}{p}R; k1{m} \* {L}T{m}{p} \* R
-J2{L}{m}{p}: {L}T{m}{p}R -> {L}T{m}{p} + R; k2{m} \* {L}T{m}{p}R
-J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32 \* {L}T2{p}R
-J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33 \* {L}T3{p}R
+J1{L}{m}{p}: {L}T{m}{p} + R -> {L}T{m}{p}R; k1{m}*{L}T{m}{p}*R
+J2{L}{m}{p}: {L}T{m}{p}R -> {L}T{m}{p} + R; k2{m}*{L}T{m}{p}R
+J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32*{L}T2{p}R
+J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33*{L}T3{p}R
 </pre>
 
 One possible extension is to permit having a python expression inside a template instance (within “{“ and “}”). This feature would eliminate one of the templated model lines in the above model by using {m+1} as a template instance.
