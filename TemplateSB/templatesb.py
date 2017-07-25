@@ -6,13 +6,6 @@ A template expression is indicated by text enclosed in
 "{" and "}". Variables are defined in Python codes
 in the Python escape (see below).
 
-Various processing commands may augment the raw text.
-These commands are indicated by a line that begins
-with {{ and ends with }}.
-Supported commands are:
-  {{ ExecutePython Begin }} - begins a sequence of python codes to execute
-  {{ ExecutePython End }} - ends a sequence of python codes to execute
-
 Python code is used to define variables used in template expressions.
 This is done with the object api that supports the following
 methods:
@@ -39,161 +32,22 @@ Command lines:
 """
 
 from api import Api
-import re
+from command import Command
+from substituter import Substituter
 import fileinput
 import sys
 
 
-COMMAND_START = "{{"
-COMMAND_END = "}}"
-VERSION = '1.1'
+VERSION = "1.1"
 SPLIT_STG = "\n"
 COMMENT_STG = "#"
 CONTINUED_STG = "\\"  # Indicates a continuation follows
-VARIABLE_START = "{"
-VARIABLE_END = "}"
 LINE_TRAN = 1  # Transparent - nothing to process (comment line, no template variable)
 LINE_COMMAND = 2  # Command line
 LINE_SUBS = 3  # Line to be processed for substitutions
 INPUT_STATE_TEXT = 1  # Inputting text to process and expand
 INPUT_STATE_PYTHON = 2  # Inputting python codes
-
-
-class _Command(object):
-  """
-  Knows how to parse command lines for the template processor.
-  Provides an interface to determine the command.
-  """
-  EXECUTE_PYTHON = 1
-  
-  def __init__(self, command_line):
-    """
-    :param str command_line: line with the command
-    """
-    self._start = False
-    self._end = True
-    parsed_line = command_line.split()
-    if (parsed_line[0] == COMMAND_START)  \
-        and (parsed_line[-1] == COMMAND_END):
-      self._command_tokens = parsed_line[1:-1]
-      self._populateState()
-    else:
-      raise ValueError("Invalid command line")
-
-  def _populateState(self):
-    """
-    Populates the state for the command
-    """
-    cls = _Command
-    if self._command_tokens[0] == "ExecutePython":
-      self._command = cls.EXECUTE_PYTHON
-    else:
-      raise ValueError("Unknown command %s" % self._command_tokens[0])
-    if len(self._command_tokens) > 1:
-      if self._command_tokens[1] == "Start":
-        self._start = True
-      elif self._command_tokens[1] == "End":
-        self._end = True
-      else:
-        raise ValueError("Unknown command qualifier %s" % self._command_tokens[1])
-
-  def isExecutePython(self):
-    cls = _Command
-    return self._command == cls.EXECUTE_PYTHON
-
-  def isStart(self):
-    return self._start
-
-  def isEnd(self):
-    return self._end
  
-
-class Substituter(object):
-  """
-  This class makes string substitutions for a set of targets and
-  replacement values. Multiple instances of replacement values are
-  considered for each target.
-  """
-
-  def __init__(self, definitions,
-       left_delim=VARIABLE_START, right_delim=VARIABLE_END):
-    """
-    :param dict definitions: key is the string to replace, values are the substitutions
-    :param char left_delim:
-    :param char right_delim:
-    """
-    self._definitions = definitions
-    self._left_delim = left_delim
-    self._right_delim = right_delim
-    self._input_state = INPUT_STATE_TEXT
-
-  @classmethod
-  def makeSubstitutionList(cls, definitions):
-    """
-    Creates a list of substitutions from a substitution defintion.
-    Suppose that the defintions are the dictionary
-    {'a': ['a1', 'a2'], 'b': ['b1', 'b2', 'b3']}.
-    Then a substituion list will be a list of dictionaries, each of which
-    has a key for the two targets ('a' and 'b') and every combination of
-    value for the keys. Assume the default left and right delimiters. In this case:
-      [ {'a': 'a1', 'b': 'b1'}, ['a': 'a2', 'b': 'b1'},
-        {'a': 'a1', 'b': 'b2'}, ['a': 'a2', 'b': 'b2'},
-        {'a': 'a1', 'b': 'b3'}, ['a': 'a2', 'b': 'b3'}
-      ]
-    :param dict definitions: key is target name, value is list of replacements
-    :return list-of-dict:
-    """
-    substitutions = [{}]
-    for key in definitions.keys():
-      accum_list = []
-      for val in definitions[key]:
-        # Create an substituion instance for this key and value
-        new_list = [dict(d) for d in substitutions]
-        tgt = key
-        _ = [d.update({tgt: val}) for d in new_list]
-        accum_list.extend(new_list)
-      substitutions = list(accum_list)
-    return [d for d in substitutions if len(d.keys()) > 0]
-
-  def getTemplateExpressions(self, stg):
-    """
-    Finds the template expressions in the string, 
-    the strings between the template delimiters.
-    :param str stg: string to process
-    :return list-of-str: Unique template expressions without delimiters
-    """
-    # Single template variable
-    pattern_str = "\%s[^%s]+\%s"  \
-       % (self._left_delim, self._left_delim, self._right_delim)
-    pat = re.compile(pattern_str)  # Single template variable
-    raw_expressions = pat.findall(stg)
-    for expression in raw_expressions:
-      expression = expression[1:-1]
-    expressions = [x for x in set(raw_expressions)]
-    return expressions
-      
-  def replace(self, stg):
-    """
-    Replaces all instances of target strings in the line,
-    eliminating redundant lines.
-    :param str stg: string where replacements are done. includes delimiter.
-    :return list-of-str:
-    """
-    replacements = []
-    cls = Substituter
-    substitutions = cls.makeSubstitutionList(self._definitions)
-    for substitution_dict in substitutions:
-      replaced_string = stg
-      for target, replc in substitution_dict.items():
-        full_target = "%s%s%s" % (self._left_delim,
-            target, self._right_delim)
-        new_string = replaced_string.replace(full_target, replc)
-        replaced_string = new_string
-      if replaced_string not in replacements:
-        replacements.append(replaced_string)
-    if len(replacements) == 0:
-      replacements.append(stg)
-    return replacements
 
 class TemplateSB(object):
   """
@@ -350,6 +204,11 @@ class TemplateSB(object):
             self._command = None
           else:
             raise RuntimeError("Unexepcted state")
+        # SetVersion command
+        elif self._command.isSetVersion():
+          version = self._command.getArguments()[0]
+          if float(version) > VERSION:
+            raise ValueError("Template processor does not support version %s" % version)
         # Other commands
         else:
           raise RuntimeError("Unexepcted Command")
@@ -374,6 +233,9 @@ class TemplateSB(object):
         else:
           raise RuntimeError("Unexepcted state")
       line = self._getNextLine(strip= not is_accumulate_statements)
+    if self._command is not None:
+      msg = "Still process command %s at EOF" % str(self._command)
+      self._errorMsg(msg)
     return "\n".join(expansions)
 
   def get(self):

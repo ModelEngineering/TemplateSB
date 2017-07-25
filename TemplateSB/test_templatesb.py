@@ -2,8 +2,8 @@
 Tests for TemplateSB.
 """
 from templatesb import TemplateSB, Substituter,  \
-    LINE_TRAN, LINE_SUBS, ESCAPE_START, ESCAPE_END,  \
-    LINE_CODE_START, LINE_CODE_END
+    LINE_TRAN, LINE_SUBS, COMMAND_START, COMMAND_END,  \
+    LINE_COMMAND, _Command
 
 import copy
 import unittest
@@ -12,47 +12,41 @@ import os
 
 
 IGNORE_TEST = False
+COMMAND_START = "%s ExecutePython Start %s  "  \
+    %(COMMAND_START, COMMAND_END)
+COMMAND_END = "%s ExecutePython End%s  "  \
+    %(COMMAND_START, COMMAND_END)
+COMMAND_BAD = "%s ExecuteDummy End%s  "  \
+    %(COMMAND_START, COMMAND_END)
 DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3'],
     'c': ['c', '']}
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
 SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
 SUBSTITUTION3 = "J{c}1: S{c}1 -> S{c}2; k1*S{c}1"
 TEMPLATE_INITIAL = '''%s
-api.addDefinitions(%s)'''  \
-    % (ESCAPE_START, str(DEFINITIONS))
+api.addDefinitions(%s)
+%s'''  \
+    % (COMMAND_START, str(DEFINITIONS), COMMAND_END)
 TEMPLATE_INITIAL_BAD = '''%s
 api.addDefinitions({'a':})'''  % ESCAPE_START
-TEMPLATE_EXECUTE = '''%s
-%s''' % (TEMPLATE_INITIAL, ESCAPE_END)
 TEMPLATE_STG1 = '''
 %s
 %s
 %s
-''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION1)
+''' % (TEMPLATE_INITIAL, SUBSTITUTION1)
 TEMPLATE_BAD = '''%s
 %s
 %s
-''' % (TEMPLATE_INITIAL_BAD, ESCAPE_END, SUBSTITUTION1)
+''' % (TEMPLATE_INITIAL_BAD, SUBSTITUTION1)
 TEMPLATE_STG2 = '''%s
 %s
 %s
-''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION2)
+''' % (TEMPLATE_INITIAL, SUBSTITUTION2)
 TEMPLATE_STG3 = '''%s
 %s
 %s
-''' % (TEMPLATE_INITIAL, ESCAPE_END, SUBSTITUTION3)
-TEMPLATE_NO_DEFINITION = '''%s
-''' % (SUBSTITUTION3)
-# Substitution
-# Definition error
-TEMPLATE_BAD = '''
-{{
-DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3'],
-    'c': ['c', '']}
-[api.addDefinition(k,v) for k,v in DEFINITIONS]
-J{z}1: S{z}1 -> S{d}2; k1*S{d}1
-}}
-'''
+''' % (TEMPLATE_INITIAL, SUBSTITUTION3)
+TEMPLATE_NO_DEFINITION = SUBSTITUTION3
 
 
 def isSubDict(dict_super, dict_sub):
@@ -183,10 +177,10 @@ class TestTemplateSB(unittest.TestCase):
   def testExecuteStatements(self):
     if IGNORE_TEST:
       return
-    template = TemplateSB(TEMPLATE_EXECUTE)
+    template = TemplateSB(TEMPLATE_INITIAL)
     self.assertEqual(len(template._definitions.keys()), 0)
     result = template.expand()
-    self.assertEqual(result.count('\n'), TEMPLATE_EXECUTE.count('\n'))
+    self.assertEqual(result.count('\n'), TEMPLATE_INITIAL.count('\n'))
 
   def _testExpand(self, template, variable):
     """
@@ -226,6 +220,20 @@ class TestTemplateSB(unittest.TestCase):
     src_path = os.path.join(parent_path, "Example")
     src_path = os.path.join(src_path, "sample.tmpl")
     TemplateSB.processFile(src_path, "/tmp/out.mdl")
+
+
+class TestCommand(unittest.TestCase):
+
+  def setUp(self):
+    self.command = _COMMAND(COMMAND_START)
+
+  def testConstructor(self):
+    parsed = COMMAND_START.split()
+    self.assertEqual(self.command._tokens[0], 
+        parsed[1])
+    self.assertEqual(self.command._tokens[1], 
+        parsed[2])
+
 
 
 if __name__ == '__main__':
