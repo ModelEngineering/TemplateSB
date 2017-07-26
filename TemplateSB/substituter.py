@@ -1,33 +1,35 @@
-'''Class for doing expression substitution.'''
+'''Class that does string expansion using template expressions.'''
 
 import re
 
-VARIABLE_START = "{"
-VARIABLE_END = "}"
+EXPRESSION_START = "{"
+EXPRESSION_END = "}"
 
 class Substituter(object):
   """
-  This class makes string substitutions for a set of targets and
-  replacement values. Multiple instances of replacement values are
-  considered for each target.
+  This class makes expands a string with template expressions,
+  an expression of template variables, based on the possible
+  values of the template variables. The resulting expansion
+  consists of multiple strings, one for each combination of
+  the values of the template variables.
   """
 
   def __init__(self, definitions,
-       left_delim=VARIABLE_START, right_delim=VARIABLE_END):
+       left_delim=EXPRESSION_START, right_delim=EXPRESSION_END):
     """
-    :param dict definitions: key is the string to replace, values are the substitutions
-    :param char left_delim:
-    :param char right_delim:
+    :param dict definitions: values of template variables
+    :param char left_delim: left delimiter for a template expression
+    :param char right_delim: right delim for a template expression
     """
     self._definitions = definitions
     self._left_delim = left_delim
     self._right_delim = right_delim
-    self._input_state = INPUT_STATE_TEXT
 
   @classmethod
   def makeSubstitutionList(cls, definitions):
     """
-    Creates a list of substitutions from a substitution defintion.
+    Creates a list of dictionaries that constitute the combinations
+    of assignment of values to the template variables.
     Suppose that the defintions are the dictionary
     {'a': ['a1', 'a2'], 'b': ['b1', 'b2', 'b3']}.
     Then a substituion list will be a list of dictionaries, each of which
@@ -63,10 +65,8 @@ class Substituter(object):
     pattern_str = "\%s[^%s]+\%s"  \
        % (self._left_delim, self._left_delim, self._right_delim)
     pat = re.compile(pattern_str)  # Single template variable
-    raw_expressions = pat.findall(stg)
-    for expression in raw_expressions:
-      expression = expression[1:-1]
-    expressions = [x for x in set(raw_expressions)]
+    raw_expressions = set(pat.findall(stg))
+    expressions = [e[1:-1] for e in raw_expressions]
     return expressions
       
   def replace(self, stg):

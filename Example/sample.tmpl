@@ -3,11 +3,11 @@
 # Note that definitions are expressed as a python dictionary
 # where the key is the template variable and its values
 # are the set of substitutions.
-{{
+{{ ExecutePython Start }}
 api.addDefinitions({'s':  ['a', 'b'], 
                     't':  ['x', 'y']
-})
-}}
+                  })
+{{ ExecutePython End }}
 # This template reaction creates four expanded reactions
 J{s}{t}: S1{s}{t} -> S2{s}{t}; k1*S1{s}{t}
 # This template reaction creates two expanded reactions

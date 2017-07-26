@@ -1,4 +1,4 @@
-'''Class for parsing and representing TemplateSB commands.'''
+'''Class that objectifies a TemplateSB command'''
 
 """
 These commands are indicated by a line that begins

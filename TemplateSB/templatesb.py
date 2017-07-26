@@ -32,8 +32,9 @@ Command lines:
 """
 
 from api import Api
-from command import Command
-from substituter import Substituter
+from command import Command, COMMAND_START, COMMAND_END
+from substituter import Substituter, EXPRESSION_START,  \
+    EXPRESSION_END
 import fileinput
 import sys
 
@@ -45,8 +46,6 @@ CONTINUED_STG = "\\"  # Indicates a continuation follows
 LINE_TRAN = 1  # Transparent - nothing to process (comment line, no template variable)
 LINE_COMMAND = 2  # Command line
 LINE_SUBS = 3  # Line to be processed for substitutions
-INPUT_STATE_TEXT = 1  # Inputting text to process and expand
-INPUT_STATE_PYTHON = 2  # Inputting python codes
  
 
 class TemplateSB(object):
@@ -106,10 +105,10 @@ class TemplateSB(object):
     elif text[0] == COMMENT_STG or len(text) == 0:
       result = LINE_TRAN
     elif text[0:2] == COMMAND_START:
-      self._command = _Command(text)
+      self._command = Command(text)
       result = LINE_COMMAND
-    elif text.count(VARIABLE_START) == 0 and  \
-        text.count(VARIABLE_END) == 0:
+    elif text.count(EXPRESSION_START) == 0 and  \
+        text.count(EXPRESSION_END) == 0:
       result = LINE_TRAN
     else:
       result = LINE_SUBS
@@ -193,7 +192,7 @@ class TemplateSB(object):
         # Accumulate python codes to execute
         if self._command.isExecutePython():
           if self._command.isStart():
-            if line_TYPE != LINE_COMMAND:
+            if line_type != LINE_COMMAND:
               statements.append(line)
             expansions.append(TemplateSB._makeComment(line))
           elif self._command.isEnd():
@@ -221,8 +220,8 @@ class TemplateSB(object):
         elif line_type == LINE_SUBS:
           # Do the variable substitutions
           expansion = substituter.replace(line)
-          is_ok = all([False if (VARIABLE_START in e)
-                       or (VARIABLE_END in e)
+          is_ok = all([False if (EXPRESSION_START in e)
+                       or (EXPRESSION_END in e)
                        else True for e in expansion])
           if not is_ok:
             msg = "Undefined template variable in line:\n%s" % line
@@ -232,9 +231,9 @@ class TemplateSB(object):
           expansions.extend(expansion)
         else:
           raise RuntimeError("Unexepcted state")
-      line = self._getNextLine(strip= not is_accumulate_statements)
+      line = self._getNextLine(strip=(self._command is None))
     if self._command is not None:
-      msg = "Still process command %s at EOF" % str(self._command)
+      msg = "Still processing command %s at EOF" % str(self._command)
       self._errorMsg(msg)
     return "\n".join(expansions)
 
