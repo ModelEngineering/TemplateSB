@@ -5,13 +5,13 @@
 """
 import fileinput
 import sys
-from TemplateSB.templatesb import TemplateSB
+from TemplateSB.template_processor import TemplateProcessor
 
 template_stg = ''
 for line in fileinput.input():
   template_stg += "\n" + line
 
-templatesb = TemplateSB(template_stg)
-expanded_stg = templatesb.do()
+processor = TemplateProcessor(template_stg)
+expanded_stg = processor.do()
 
 sys.stdout.write(expanded_stg)

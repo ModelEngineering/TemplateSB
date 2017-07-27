@@ -2,7 +2,7 @@
 Tests for TemplateProcessor
 """
 from template_processor import TemplateProcessor, LINE_TRAN,  \
-    LINE_SUBS, LINE_COMMAND
+    LINE_SUBS, LINE_COMMAND, CONTINUED_STG
 from command import COMMAND_START, COMMAND_END
 
 import copy
@@ -19,8 +19,8 @@ COMMAND = \
 '''%s ExecutePython Start %s
 DEFINITIONS = %s
 api.addDefinitions(DEFINITIONS)
-%s ExecutePython End %s  
-''' %(COMMAND_START, COMMAND_END, str(DEFINITIONS),
+%s ExecutePython End %s '''  \
+    %(COMMAND_START, COMMAND_END, str(DEFINITIONS),
     COMMAND_START, COMMAND_END)
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
 SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
@@ -100,6 +100,15 @@ class TestTemplateProcessor(unittest.TestCase):
     expected = len(expecteds)
     self.assertEqual(expected, len(lines))
 
+  def testGetNextLineContinued(self):
+    line_1 = "Line part 1."
+    line_2 = "Line part 2."
+    line = "%s %s\n%s" % (line_1, CONTINUED_STG, line_2)
+    processor = TemplateProcessor(line)
+    result = processor._getNextLine()
+    self.assertTrue(line_1 in result)
+    self.assertTrue(line_2 in result)
+
   def testGetNextLineContinuation(self):
     if IGNORE_TEST:
       return
@@ -148,7 +157,6 @@ class TestTemplateProcessor(unittest.TestCase):
     if IGNORE_TEST:
       return
     self.processor = TemplateProcessor(TEMPLATE_NO_DEFINITION)
-    import pdb; pdb.set_trace()
     with self.assertRaises(ValueError):
       lines = self.processor.do()
 
@@ -161,6 +169,31 @@ class TestTemplateProcessor(unittest.TestCase):
     src_path = os.path.join(src_path, "sample.tmpl")
     TemplateProcessor.processFile(src_path, "/tmp/out.mdl")
 
+  def testExecuteStatements(self):
+    if IGNORE_TEST:
+      return
+    var1 = 'aa'
+    var2 = 'bb'
+    value1 = 1
+    const2 = 5
+    statements = ["%s = %d" % (var1, value1), 
+        "%s = %d*%s" % (var2, const2, var1)]
+    self.processor._execute_statements(statements)
+    self.assertEqual(self.processor._namespace['aa'], value1)
+    self.assertEqual(self.processor._namespace['bb'], value1*const2)
+
+  def testExecuteStatementsError(self):
+    if IGNORE_TEST:
+      return
+    var1 = 'aa'
+    var2 = 'bb'
+    value1 = 1
+    const2 = 5
+    statements = ["%s = " % (var1), 
+        "%s = %d*%s" % (var2, const2, var1)]
+    with self.assertRaises(ValueError):
+      self.processor._execute_statements(statements)
+    
 
 if __name__ == '__main__':
   unittest.main()

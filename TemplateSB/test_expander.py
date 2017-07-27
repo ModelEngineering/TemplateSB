@@ -52,7 +52,7 @@ class TestSubtituter(unittest.TestCase):
     variables = self.expander._getTemplateVariables("x{a} -> x + { 1, 2,3 }; k*{a}")
     self.assertEqual(set(variables), set(["{a}", "{1,2,3}"]))
     
-  def testReplace(self):
+  def testDo(self):
     if IGNORE_TEST:
       return
     expander = Expander(DEFINITIONS)
@@ -61,6 +61,13 @@ class TestSubtituter(unittest.TestCase):
     result = expander.do(SUBSTITUTION2)
     expected = len(DEFINITIONS['a'])
     self.assertEqual(len(result), expected)
+    
+  def testDoSubstitutionNoDefinition(self):
+    if IGNORE_TEST:
+      return
+    expander = Expander({})
+    result = expander.do(SUBSTITUTION1)
+    self.assertEqual(result[0], SUBSTITUTION1)
 
   def testGetTemplateExpressions(self):
     if IGNORE_TEST:

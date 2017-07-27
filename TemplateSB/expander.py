@@ -69,20 +69,21 @@ class Expander(object):
     expressions = [e[1:-1] for e in raw_expressions]
     return expressions
       
-  def do(self, stg):
+  def do(self, segment):
     """
     Creates a set of substitutions of template expressions using the
     values of template variables.
     Eliminates redundant lines.
-    :param str stg: string where replacements are done. includes delimiter.
+    :param str segment: segment of the template; may be multiple lines
     :return list-of-str:
+    :raises ValueError: if not all template expressions are eliminated
     """
     substitutions = []
     cls = Expander
     # Create the combinations of assignments of values to variables
     assignments = cls.makeSubstitutionList(self._definitions)
     for assignment in assignments:
-      substitution = stg
+      substitution = segment
       for variable, value in assignment.items():
         target = "%s%s%s" % (self._left_delim,
             variable, self._right_delim)
@@ -90,4 +91,12 @@ class Expander(object):
         substitution = new_string
       if substitution not in substitutions:
         substitutions.append(substitution)
+    # Handle case of no template variable in segment
+    if len(substitutions) == 0:
+      substitutions = [segment]
+    # Verify there are no remaining template variables
+    for substitution in substitutions:
+      if len(self.getTemplateExpressions(substitution)) > 0:
+        raise ValueError("Unresolved template expressions in %s"
+            % segment)
     return substitutions

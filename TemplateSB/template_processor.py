@@ -141,8 +141,9 @@ class TemplateProcessor(object):
       self._lineno += 1
       if len(text) == 0:
         continue
-      if text[-1] == CONTINUED_STG:
-        self._current_line = self._current_line + text[0:-1]
+      if text[-len(CONTINUED_STG)] == CONTINUED_STG:
+        self._current_line = self._current_line  \
+            + text[0:-len(CONTINUED_STG)]
       else:
         self._current_line = self._current_line + text
         break
@@ -162,8 +163,9 @@ class TemplateProcessor(object):
     try:
       exec(program, self._namespace)
     except Exception as e:
-      msg = "***Error %s executing:\n %s" % (e.message, program)
-      raise ValueError(msg)
+      msg = "***Error %s executing on line %d:\n%s"  \
+          % (e.msg, e.lineno, program)
+      self._errorMsg(msg)
     self._definitions = self._namespace['api'].getDefinitions()
 
   def do(self):
@@ -233,11 +235,9 @@ class TemplateProcessor(object):
         # Line to be substituted
         elif line_type == LINE_SUBS:
           # Do the variable substitutions
-          expansion = expander.do(line)
-          is_ok = all([False if (EXPRESSION_START in e)
-                       or (EXPRESSION_END in e)
-                       else True for e in expansion])
-          if not is_ok:
+          try:
+            expansion = expander.do(line)
+          except ValueError as err:
             msg = "Undefined template variable in line:\n%s" % line
             self._errorMsg(msg)
           if len(expansion) > 1:
