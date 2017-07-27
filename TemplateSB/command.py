@@ -81,3 +81,6 @@ class Command(object):
 
   def getArguments(self):
     return self._arguments
+
+  def getCommandVerb(self):
+    return self._command_verb

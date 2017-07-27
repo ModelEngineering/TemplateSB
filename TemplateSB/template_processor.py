@@ -26,14 +26,14 @@ Command lines:
    b. classify line operates differently
    c. use command line structure instead of code escape
 
-1. Test getTemplateExpressions (substituter)
+1. Test getTemplateExpressions (expander)
 2. Evaluate template expressions and extend the set of substitions
-   done by the substituter?
+   done by the expander?
 """
 
 from api import Api
 from command import Command, COMMAND_START, COMMAND_END
-from substituter import Substituter, EXPRESSION_START,  \
+from expander import Expander, EXPRESSION_START,  \
     EXPRESSION_END
 import fileinput
 import sys
@@ -48,14 +48,14 @@ LINE_COMMAND = 2  # Command line
 LINE_SUBS = 3  # Line to be processed for substitutions
  
 
-class TemplateSB(object):
+class TemplateProcessor(object):
   """
   This class processes an Antimony model written using template variable substitutions.
   See the project README for syntax details.
   Usage:
     import tellurium as te
     templatesb = Sbstar(template_string)
-    expanded_string = templatesb.expand()
+    expanded_string = templatesb.do()
     rr = te.loada(expanded_string)
     results = rr.simulate(start, end, samples)
   """
@@ -80,14 +80,14 @@ class TemplateSB(object):
     :param str inpath: path to the file containing the templated model
     :param str outpath: path to the file where the flattened model is placed
     """
-    template_stg = ''
+    template = ''
     with open(inpath, 'r') as infile:
       for line in infile:
-        template_stg += "\n" + line
-    templatesb = cls(template_stg)
-    expanded_stg = templatesb.expand()
+        template += "\n" + line
+    processor = cls(template)
+    expansion = processor.do()
     with open(outpath, 'w') as outfile:
-      outfile.write(expanded_stg)
+      outfile.write(expansion)
 
   def _classifyLine(self):
     """
@@ -105,7 +105,6 @@ class TemplateSB(object):
     elif text[0] == COMMENT_STG or len(text) == 0:
       result = LINE_TRAN
     elif text[0:2] == COMMAND_START:
-      self._command = Command(text)
       result = LINE_COMMAND
     elif text.count(EXPRESSION_START) == 0 and  \
         text.count(EXPRESSION_END) == 0:
@@ -167,7 +166,7 @@ class TemplateSB(object):
       raise ValueError(msg)
     self._definitions = self._namespace['api'].getDefinitions()
 
-  def expand(self):
+  def do(self):
     """
     Processes the template string and returns the expanded lines for input
     to road runner.
@@ -181,25 +180,39 @@ class TemplateSB(object):
     :return str expanded_string:
     :raises ValueError: errors encountered in the template string
     """
+    cls = TemplateProcessor
     expansions = []
-    substituter = Substituter({})
+    expander = Expander({})
     line = self._getNextLine()
     statements = []
     while line is not None:  # End of input if None
       line_type = self._classifyLine()
       # Handlie line specially if there is a command in effect
+      # Paired commands (e.g., Start, End pairs) use self._command
+      # as state to indicate that they are in a command block.
+      if line_type == LINE_COMMAND:
+        if self._command is not None:
+          new_command = Command(line)
+          if new_command.getCommandVerb()  \
+              == self._command.getCommandVerb():
+            if new_command.isEnd():
+              self._command = Command(line)
+            else:
+              self._errorMsg("Cannot nest commands")
+        else:
+          self._command = Command(line)
       if self._command is not None:
         # Accumulate python codes to execute
         if self._command.isExecutePython():
           if self._command.isStart():
             if line_type != LINE_COMMAND:
               statements.append(line)
-            expansions.append(TemplateSB._makeComment(line))
+            expansions.append(cls._makeComment(line))
           elif self._command.isEnd():
             self._execute_statements(statements)  # updates self._definitions
             statements = []
-            substituter = Substituter(self._definitions)  # Reflect updates from Python
-            expansions.append(TemplateSB._makeComment(line))
+            expander = Expander(self._definitions)  # Reflect updates from Python
+            expansions.append(cls._makeComment(line))
             self._command = None
           else:
             raise RuntimeError("Unexepcted state")
@@ -207,10 +220,11 @@ class TemplateSB(object):
         elif self._command.isSetVersion():
           version = self._command.getArguments()[0]
           if float(version) > VERSION:
-            raise ValueError("Template processor does not support version %s" % version)
+            self._errorMsg("Unsupported version %s" % version)
+          self._command = None
         # Other commands
         else:
-          raise RuntimeError("Unexepcted Command")
+          self._errorMsg("Unknown command")
       # No command being processed
       else:
         # Transparent line (comment)
@@ -219,7 +233,7 @@ class TemplateSB(object):
         # Line to be substituted
         elif line_type == LINE_SUBS:
           # Do the variable substitutions
-          expansion = substituter.replace(line)
+          expansion = expander.do(line)
           is_ok = all([False if (EXPRESSION_START in e)
                        or (EXPRESSION_END in e)
                        else True for e in expansion])
@@ -227,7 +241,7 @@ class TemplateSB(object):
             msg = "Undefined template variable in line:\n%s" % line
             self._errorMsg(msg)
           if len(expansion) > 1:
-            expansions.append(TemplateSB._makeComment(line))
+            expansions.append(cls._makeComment(line))
           expansions.extend(expansion)
         else:
           raise RuntimeError("Unexepcted state")

@@ -12,6 +12,6 @@ for line in fileinput.input():
   template_stg += "\n" + line
 
 templatesb = TemplateSB(template_stg)
-expanded_stg = templatesb.expand()
+expanded_stg = templatesb.do()
 
 sys.stdout.write(expanded_stg)

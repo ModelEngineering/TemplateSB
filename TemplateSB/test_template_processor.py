@@ -1,7 +1,8 @@
 """
-Tests for TemplateSB.
+Tests for TemplateProcessor
 """
-from templatesb import TemplateSB, LINE_TRAN, LINE_SUBS, LINE_COMMAND
+from template_processor import TemplateProcessor, LINE_TRAN,  \
+    LINE_SUBS, LINE_COMMAND
 from command import COMMAND_START, COMMAND_END
 
 import copy
@@ -29,14 +30,11 @@ TEMPLATE_STG1 = '''
 %s
 ''' % (COMMAND, SUBSTITUTION1)
 TEMPLATE_BAD = '''%s
-%s
-''' % (COMMAND_START, SUBSTITUTION1)
+%s''' % (COMMAND_START, SUBSTITUTION1)
 TEMPLATE_STG2 = '''%s
-%s
-''' % (COMMAND, SUBSTITUTION2)
+%s''' % (COMMAND, SUBSTITUTION2)
 TEMPLATE_STG3 = '''%s
-%s
-''' % (COMMAND, SUBSTITUTION3)
+%s''' % (COMMAND, SUBSTITUTION3)
 TEMPLATE_NO_DEFINITION = SUBSTITUTION3
 
 
@@ -59,46 +57,46 @@ def isSubDict(dict_super, dict_sub):
 # Tests
 #############################
 # pylint: disable=W0212,C0111,R0904
-class TestTemplateSB(unittest.TestCase):
+class TestTemplateProcessor(unittest.TestCase):
 
   def setUp(self):
-    self.templatesb = TemplateSB(TEMPLATE_STG2)
+    self.processor = TemplateProcessor(TEMPLATE_STG2)
 
   def testConstructor(self):
     if IGNORE_TEST:
       return
-    self.assertTrue(len(self.templatesb._lines) > 0)
+    self.assertTrue(len(self.processor._lines) > 0)
 
   def testClassifyLine(self):
     if IGNORE_TEST:
       return
-    self.templatesb._current_line = COMMAND_START
-    self.assertEqual(self.templatesb._classifyLine(), LINE_COMMAND)
-    self.templatesb._current_line = SUBSTITUTION1
-    self.assertEqual(self.templatesb._classifyLine(), LINE_TRAN)
-    self.templatesb._current_line = SUBSTITUTION2
-    self.assertEqual(self.templatesb._classifyLine(), LINE_SUBS)
+    self.processor._current_line = COMMAND_START
+    self.assertEqual(self.processor._classifyLine(), LINE_COMMAND)
+    self.processor._current_line = SUBSTITUTION1
+    self.assertEqual(self.processor._classifyLine(), LINE_TRAN)
+    self.processor._current_line = SUBSTITUTION2
+    self.assertEqual(self.processor._classifyLine(), LINE_SUBS)
 
   def testErrorMsg(self):
     if IGNORE_TEST:
       return
     with self.assertRaises(ValueError):
-      self.templatesb._errorMsg("")
+      self.processor._errorMsg("")
 
   def testGetNextLine(self):
     if IGNORE_TEST:
       return
-    templatesb = TemplateSB(TEMPLATE_STG2)
-    line = templatesb._getNextLine()
+    processor = TemplateProcessor(TEMPLATE_STG2)
+    line = processor._getNextLine()
     lines = []
     idx = 0
     expecteds = TEMPLATE_STG2.split('\n')
     while line is not None:
-      expected = expecteds[idx]
+      expected = expecteds[idx].strip()
       idx += 1
       lines.append(line)
       self.assertEqual(line, expected)
-      line = templatesb._getNextLine()
+      line = processor._getNextLine()
     expected = len(expecteds)
     self.assertEqual(expected, len(lines))
 
@@ -108,19 +106,19 @@ class TestTemplateSB(unittest.TestCase):
     stg = '''this \
     is a \
     continuation.'''
-    templatesb = TemplateSB(stg)
-    line = templatesb._getNextLine()
+    processor = TemplateProcessor(stg)
+    line = processor._getNextLine()
     self.assertTrue("is a" in line)
     self.assertTrue("continuation" in line)
-    line = templatesb._getNextLine()
+    line = processor._getNextLine()
     self.assertIsNone(line)
 
   def testExecuteStatements(self):
     if IGNORE_TEST:
       return
-    template = TemplateSB(COMMAND)
+    template = TemplateProcessor(COMMAND)
     self.assertEqual(len(template._definitions.keys()), 0)
-    result = template.expand()
+    result = template.do()
     self.assertEqual(result.count('\n'), COMMAND.count('\n'))
 
   def _testExpand(self, template, variable):
@@ -128,8 +126,8 @@ class TestTemplateSB(unittest.TestCase):
     :param str template: template to expand
     :param str variable: variable to check
     """
-    self.templatesb = TemplateSB(template)
-    lines = self.templatesb.expand()
+    self.processor = TemplateProcessor(template)
+    lines = self.processor.do()
     for val in DEFINITIONS[variable]:
       self.assertTrue("J%s1:" % val in lines)
 
@@ -143,15 +141,16 @@ class TestTemplateSB(unittest.TestCase):
     if IGNORE_TEST:
       return
     with self.assertRaises(ValueError):
-      templatesb = TemplateSB(TEMPLATE_BAD)
-      result = templatesb.expand()
+      processor = TemplateProcessor(TEMPLATE_BAD)
+      result = processor.do()
 
   def testNoDefinintion(self):
     if IGNORE_TEST:
       return
-    self.templatesb = TemplateSB(TEMPLATE_NO_DEFINITION)
+    self.processor = TemplateProcessor(TEMPLATE_NO_DEFINITION)
+    import pdb; pdb.set_trace()
     with self.assertRaises(ValueError):
-      lines = self.templatesb.expand()
+      lines = self.processor.do()
 
   def testFile(self):
     if IGNORE_TEST:
@@ -160,7 +159,7 @@ class TestTemplateSB(unittest.TestCase):
     parent_path = os.path.dirname(dir_path)
     src_path = os.path.join(parent_path, "Example")
     src_path = os.path.join(src_path, "sample.tmpl")
-    TemplateSB.processFile(src_path, "/tmp/out.mdl")
+    TemplateProcessor.processFile(src_path, "/tmp/out.mdl")
 
 
 if __name__ == '__main__':

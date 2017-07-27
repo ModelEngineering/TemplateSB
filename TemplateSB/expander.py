@@ -5,7 +5,7 @@ import re
 EXPRESSION_START = "{"
 EXPRESSION_END = "}"
 
-class Substituter(object):
+class Expander(object):
   """
   This class makes expands a string with template expressions,
   an expression of template variables, based on the possible
@@ -46,7 +46,7 @@ class Substituter(object):
     for key in definitions.keys():
       accum_list = []
       for val in definitions[key]:
-        # Create an substituion instance for this key and value
+        # Create a substituion for this key and value
         new_list = [dict(d) for d in substitutions]
         tgt = key
         _ = [d.update({tgt: val}) for d in new_list]
@@ -69,25 +69,25 @@ class Substituter(object):
     expressions = [e[1:-1] for e in raw_expressions]
     return expressions
       
-  def replace(self, stg):
+  def do(self, stg):
     """
-    Replaces all instances of target strings in the line,
-    eliminating redundant lines.
+    Creates a set of substitutions of template expressions using the
+    values of template variables.
+    Eliminates redundant lines.
     :param str stg: string where replacements are done. includes delimiter.
     :return list-of-str:
     """
-    replacements = []
-    cls = Substituter
-    substitutions = cls.makeSubstitutionList(self._definitions)
-    for substitution_dict in substitutions:
-      replaced_string = stg
-      for target, replc in substitution_dict.items():
-        full_target = "%s%s%s" % (self._left_delim,
-            target, self._right_delim)
-        new_string = replaced_string.replace(full_target, replc)
-        replaced_string = new_string
-      if replaced_string not in replacements:
-        replacements.append(replaced_string)
-    if len(replacements) == 0:
-      replacements.append(stg)
-    return replacements
+    substitutions = []
+    cls = Expander
+    # Create the combinations of assignments of values to variables
+    assignments = cls.makeSubstitutionList(self._definitions)
+    for assignment in assignments:
+      substitution = stg
+      for variable, value in assignment.items():
+        target = "%s%s%s" % (self._left_delim,
+            variable, self._right_delim)
+        new_string = substitution.replace(target, value)
+        substitution = new_string
+      if substitution not in substitutions:
+        substitutions.append(substitution)
+    return substitutions

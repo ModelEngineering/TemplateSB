@@ -1,7 +1,7 @@
 """
-Tests for Substituter
+Tests for Expander
 """
-from substituter import Substituter, EXPRESSION_START,  \
+from expander import Expander, EXPRESSION_START,  \
     EXPRESSION_END
 
 import unittest
@@ -22,20 +22,20 @@ SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
 class TestSubtituter(unittest.TestCase):
 
   def setUp(self):
-    self.substituter = Substituter(DEFINITIONS)
+    self.expander = Expander(DEFINITIONS)
 
   def testMakeSubtitutionList(self):
     if IGNORE_TEST:
       return
-    substitution_list = Substituter.makeSubstitutionList(DEFINITIONS)
+    substitution_list = Expander.makeSubstitutionList(DEFINITIONS)
     expected = np.prod([len(v) for v in DEFINITIONS.values()])
     self.assertEqual(len(substitution_list), expected)
-    substitution_list = Substituter.makeSubstitutionList({})
+    substitution_list = Expander.makeSubstitutionList({})
     self.assertEqual(len(substitution_list), 0)
     definitions = dict(DEFINITIONS)
     key = DEFINITIONS.keys()[0]
     del definitions[key]
-    substitution_list = Substituter.makeSubstitutionList(definitions)
+    substitution_list = Expander.makeSubstitutionList(definitions)
     expected = np.prod([len(v) for v in definitions.values()])
     self.assertEqual(len(substitution_list), expected)
 
@@ -43,22 +43,22 @@ class TestSubtituter(unittest.TestCase):
     return
     if IGNORE_TEST:
       return
-    variables = self.substituter._getTemplateVariables("x{a} -> x + {a}; k*{a}")
+    variables = self.expander._getTemplateVariables("x{a} -> x + {a}; k*{a}")
     self.assertEqual(variables,["{a}"])
-    variables = self.substituter._getTemplateVariables("x{a} -> x + {b}; k*{a}")
+    variables = self.expander._getTemplateVariables("x{a} -> x + {b}; k*{a}")
     self.assertEqual(variables, ["{a}", "{b}"])
-    variables = self.substituter._getTemplateVariables("x{a} -> x + { b }; k*{a}")
+    variables = self.expander._getTemplateVariables("x{a} -> x + { b }; k*{a}")
     self.assertEqual(variables, ["{a}", "{b}"])
-    variables = self.substituter._getTemplateVariables("x{a} -> x + { 1, 2,3 }; k*{a}")
+    variables = self.expander._getTemplateVariables("x{a} -> x + { 1, 2,3 }; k*{a}")
     self.assertEqual(set(variables), set(["{a}", "{1,2,3}"]))
     
   def testReplace(self):
     if IGNORE_TEST:
       return
-    substituter = Substituter(DEFINITIONS)
-    result = substituter.replace(SUBSTITUTION1)
+    expander = Expander(DEFINITIONS)
+    result = expander.do(SUBSTITUTION1)
     self.assertEqual(result[0], SUBSTITUTION1)
-    result = substituter.replace(SUBSTITUTION2)
+    result = expander.do(SUBSTITUTION2)
     expected = len(DEFINITIONS['a'])
     self.assertEqual(len(result), expected)
 
@@ -73,7 +73,7 @@ class TestSubtituter(unittest.TestCase):
       template = proto_template % (
           EXPRESSION_START, expr, EXPRESSION_END,
           EXPRESSION_START, expr, EXPRESSION_END)
-      result = self.substituter.getTemplateExpressions(template)
+      result = self.expander.getTemplateExpressions(template)
       self.assertEqual(len(result), 1)
       self.assertEqual(result[0], expr)
 
