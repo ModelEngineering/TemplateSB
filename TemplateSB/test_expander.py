@@ -84,5 +84,10 @@ class TestSubtituter(unittest.TestCase):
       self.assertEqual(len(result), 1)
       self.assertEqual(result[0], expr)
 
+  def testExpandTemplateExpressions(self):
+    if IGNORE_TEST:
+      return
+    raise RuntimeError("Not yet implemented")
+
 if __name__ == '__main__':
   unittest.main()

@@ -1,9 +1,16 @@
 '''Evaluates expressions in a namespace.'''
 
-class ExpressionEvaluator(object):
+from api import Api
 
-  def __init__(self, namespace):
-    self._namespace = namespace
+class Executor(object):
+  """
+  Executes statements and expressions.
+  Manages the name space and access to definitions.
+  """
+
+  def __init__(self):
+    self._api = Api()
+    self._namespace = {'api': self._api}
 
   def addNamespace(self, namespace):
     """
@@ -21,10 +28,25 @@ class ExpressionEvaluator(object):
     for name in names:
       del self._namespace[name]
 
-  def do(self, expression):
+  def doExpression(self, expression):
     """
     Evaluates the expression in the namespace, returning
     the result.
+    :param str expression: python expression
     """
     result = eval(expression, self._namespace)
     return result
+
+  def doScript(self, program):
+    """
+    Evaluates a program consisting of one or more statements.
+    :param str program:
+    """
+    exec(program, self._namespace)
+
+  def getDefinintions(self):
+    """
+    :return dict: Variable definitions
+    """
+    return self._namespace['api'].getDefinitions()
+

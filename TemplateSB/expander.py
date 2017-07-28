@@ -1,6 +1,5 @@
 '''Class that does string expansion using template expressions.'''
 
-from expression_evaluator import ExpressionEvaluator
 import re
 
 EXPRESSION_START = "{"
@@ -15,15 +14,14 @@ class Expander(object):
   the values of the template variables.
   """
 
-  def __init__(self, namespace, definitions,
+  def __init__(self, executor,
        left_delim=EXPRESSION_START, right_delim=EXPRESSION_END):
     """
-    :param dict definitions: values of template variables
+    :param Executor executor:
     :param char left_delim: left delimiter for a template expression
     :param char right_delim: right delim for a template expression
     """
-    self._namespace = namespace
-    self._definitions = definitions
+    self._executor = executor
     self._left_delim = left_delim
     self._right_delim = right_delim
 
@@ -83,20 +81,22 @@ class Expander(object):
     substitutions = []
     cls = Expander
     # Create the combinations of assignments of values to variables
-    assignments = cls.makeSubstitutionList(self._definitions)
+    definitions = self._executor.getDefinitions()
+    assignments = cls.makeSubstitutionList(definitions)
     expressions = self.getTemplateExpressions(segment)
-    evaluator = ExpressionEvaluator(self._namespace)
     for assignment in assignments:
-      evaluator.addNamespace(assignment)
+      self._executor.addNamespace(assignment)
       substitution = segment
       for expression in expressions:
         target = "%s%s%s" % (self._left_delim,
             expression, self._right_delim)
-        replacement = evaluator.do(expression)
+        replacement = evaluator.doExpression(expression)
         new_string = substitution.replace(target, str(replacement))
         substitution = new_string
       if substitution not in substitutions:
         substitutions.append(substitution)
+    # Remove the added names
+    self._executor.deletedNamespace(definitions.keys())
     # Handle case of no template variable in segment
     if len(substitutions) == 0:
       substitutions = [segment]

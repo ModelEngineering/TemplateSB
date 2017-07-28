@@ -18,20 +18,9 @@ Notes
     a. Change subtituter
     b. Change expand
   2. Can't do implicit definitions if have expressions?
-
-Command lines:
-1. Completed code changes
-2. Test
-   a. Test new methods
-   b. classify line operates differently
-   c. use command line structure instead of code escape
-
-1. Test getTemplateExpressions (expander)
-2. Evaluate template expressions and extend the set of substitions
-   done by the expander?
 """
 
-from api import Api
+from executor import Executor
 from command import Command, COMMAND_START, COMMAND_END
 from expander import Expander, EXPRESSION_START,  \
     EXPRESSION_END
@@ -52,12 +41,6 @@ class TemplateProcessor(object):
   """
   This class processes an Antimony model written using template variable substitutions.
   See the project README for syntax details.
-  Usage:
-    import tellurium as te
-    templatesb = Sbstar(template_string)
-    expanded_string = templatesb.do()
-    rr = te.loada(expanded_string)
-    results = rr.simulate(start, end, samples)
   """
   def __init__(self, template_string):
     """
@@ -66,11 +49,10 @@ class TemplateProcessor(object):
     """
     self._template_string = template_string
     self._lines = self._template_string.split(SPLIT_STG)
-    self._definitions = {}  # Dictionary of template variables and values
+    self._executor = Executor()
+    self._expander = Expander(self._executor)
     self._lineno = 0
     self._current_line = None  # Complete line extracted from input
-    self._api = Api()
-    self._namespace = {'api': self._api}
     self._command = None  # Command being processed
 
   @classmethod
@@ -185,7 +167,6 @@ class TemplateProcessor(object):
     """
     cls = TemplateProcessor
     expansions = []
-    expander = Expander(self._namespace, {})
     line = self._getNextLine()
     statements = []
     while line is not None:  # End of input if None
@@ -212,10 +193,15 @@ class TemplateProcessor(object):
               statements.append(line)
             expansions.append(cls._makeComment(line))
           elif self._command.isEnd():
-            self._execute_statements(statements)  # updates self._definitions
+            try:
+              program = '\n'.join(statements)
+              self._execute.doScript(program)
+            except Exception as err:
+              msg = "***Error %s executing on line %d:\n%s"  \
+                  % (err.msg, err.lineno, program)
+              self._errorMsg(msg)
             statements = []
             # Reflect updates from Python
-            expander = Expander(self._namespace, self._definitions)
             expansions.append(cls._makeComment(line))
             self._command = None
           else:
@@ -238,7 +224,7 @@ class TemplateProcessor(object):
         elif line_type == LINE_SUBS:
           # Do the variable substitutions
           try:
-            expansion = expander.do(line)
+            expansion = self._expander.do(line)
           except Exception as err:
             msg = "Runtime error in expression"
             self._errorMsg(msg)
