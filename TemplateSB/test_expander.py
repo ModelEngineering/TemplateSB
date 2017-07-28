@@ -22,7 +22,7 @@ SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
 class TestSubtituter(unittest.TestCase):
 
   def setUp(self):
-    self.expander = Expander(DEFINITIONS)
+    self.expander = Expander({}, DEFINITIONS)
 
   def testMakeSubtitutionList(self):
     if IGNORE_TEST:
@@ -55,7 +55,7 @@ class TestSubtituter(unittest.TestCase):
   def testDo(self):
     if IGNORE_TEST:
       return
-    expander = Expander(DEFINITIONS)
+    expander = Expander({}, DEFINITIONS)
     result = expander.do(SUBSTITUTION1)
     self.assertEqual(result[0], SUBSTITUTION1)
     result = expander.do(SUBSTITUTION2)
@@ -65,7 +65,7 @@ class TestSubtituter(unittest.TestCase):
   def testDoSubstitutionNoDefinition(self):
     if IGNORE_TEST:
       return
-    expander = Expander({})
+    expander = Expander({}, {})
     result = expander.do(SUBSTITUTION1)
     self.assertEqual(result[0], SUBSTITUTION1)
 

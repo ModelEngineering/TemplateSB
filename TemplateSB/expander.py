@@ -1,5 +1,6 @@
 '''Class that does string expansion using template expressions.'''
 
+from expression_evaluator import ExpressionEvaluator
 import re
 
 EXPRESSION_START = "{"
@@ -14,13 +15,14 @@ class Expander(object):
   the values of the template variables.
   """
 
-  def __init__(self, definitions,
+  def __init__(self, namespace, definitions,
        left_delim=EXPRESSION_START, right_delim=EXPRESSION_END):
     """
     :param dict definitions: values of template variables
     :param char left_delim: left delimiter for a template expression
     :param char right_delim: right delim for a template expression
     """
+    self._namespace = namespace
     self._definitions = definitions
     self._left_delim = left_delim
     self._right_delim = right_delim
@@ -82,12 +84,16 @@ class Expander(object):
     cls = Expander
     # Create the combinations of assignments of values to variables
     assignments = cls.makeSubstitutionList(self._definitions)
+    expressions = self.getTemplateExpressions(segment)
+    evaluator = ExpressionEvaluator(self._namespace)
     for assignment in assignments:
+      evaluator.addNamespace(assignment)
       substitution = segment
-      for variable, value in assignment.items():
+      for expression in expressions:
         target = "%s%s%s" % (self._left_delim,
-            variable, self._right_delim)
-        new_string = substitution.replace(target, value)
+            expression, self._right_delim)
+        replacement = evaluator.do(expression)
+        new_string = substitution.replace(target, str(replacement))
         substitution = new_string
       if substitution not in substitutions:
         substitutions.append(substitution)

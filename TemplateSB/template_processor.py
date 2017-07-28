@@ -118,7 +118,8 @@ class TemplateProcessor(object):
     :param str msg:
     :raises ValueError:
     """
-    error = "on line %d. %s" % (self._lineno, msg)
+    error = "on line %d.\n'%s'\nError message: %s"  \
+        % (self._lineno, self._current_line, msg)
     raise ValueError(error)
 
   def _getNextLine(self, strip=True):
@@ -184,7 +185,7 @@ class TemplateProcessor(object):
     """
     cls = TemplateProcessor
     expansions = []
-    expander = Expander({})
+    expander = Expander(self._namespace, {})
     line = self._getNextLine()
     statements = []
     while line is not None:  # End of input if None
@@ -213,7 +214,8 @@ class TemplateProcessor(object):
           elif self._command.isEnd():
             self._execute_statements(statements)  # updates self._definitions
             statements = []
-            expander = Expander(self._definitions)  # Reflect updates from Python
+            # Reflect updates from Python
+            expander = Expander(self._namespace, self._definitions)
             expansions.append(cls._makeComment(line))
             self._command = None
           else:
@@ -237,8 +239,8 @@ class TemplateProcessor(object):
           # Do the variable substitutions
           try:
             expansion = expander.do(line)
-          except ValueError as err:
-            msg = "Undefined template variable in line:\n%s" % line
+          except Exception as err:
+            msg = "Runtime error in expression"
             self._errorMsg(msg)
           if len(expansion) > 1:
             expansions.append(cls._makeComment(line))

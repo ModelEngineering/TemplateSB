@@ -140,7 +140,7 @@ class TestTemplateProcessor(unittest.TestCase):
     for val in DEFINITIONS[variable]:
       self.assertTrue("J%s1:" % val in lines)
 
-  def testExpand(self):
+  def testDo(self):
     if IGNORE_TEST:
       return
     self._testExpand(TEMPLATE_STG2, 'a')
