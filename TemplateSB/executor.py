@@ -44,9 +44,16 @@ class Executor(object):
     """
     exec(program, self._namespace)
 
-  def getDefinintions(self):
+  def getDefinitions(self):
     """
     :return dict: Variable definitions
     """
     return self._namespace['api'].getDefinitions()
+
+  def setDefinitions(self, definitions):
+    """
+    :param dict definitions: possible values of template variables
+    """
+    api_object = self._namespace['api']
+    api_object.addDefinitions(definitions)
 

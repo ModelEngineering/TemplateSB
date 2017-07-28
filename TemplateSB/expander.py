@@ -90,13 +90,13 @@ class Expander(object):
       for expression in expressions:
         target = "%s%s%s" % (self._left_delim,
             expression, self._right_delim)
-        replacement = evaluator.doExpression(expression)
+        replacement = self._executor.doExpression(expression)
         new_string = substitution.replace(target, str(replacement))
         substitution = new_string
       if substitution not in substitutions:
         substitutions.append(substitution)
     # Remove the added names
-    self._executor.deletedNamespace(definitions.keys())
+    self._executor.deleteNames(definitions.keys())
     # Handle case of no template variable in segment
     if len(substitutions) == 0:
       substitutions = [segment]

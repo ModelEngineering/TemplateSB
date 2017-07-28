@@ -136,21 +136,6 @@ class TemplateProcessor(object):
   def _makeComment(line):
     return "%s%s" % (COMMENT_STG, line)
 
-  def _execute_statements(self, statements):
-    """
-    Executes the statements and updates the variable
-    definitions.
-    :param list-of-str statements:
-    """
-    program = '\n'.join(statements)
-    try:
-      exec(program, self._namespace)
-    except Exception as e:
-      msg = "***Error %s executing on line %d:\n%s"  \
-          % (e.msg, e.lineno, program)
-      self._errorMsg(msg)
-    self._definitions = self._namespace['api'].getDefinitions()
-
   def do(self):
     """
     Processes the template string and returns the expanded lines for input

@@ -3,12 +3,13 @@ Tests for Expander
 """
 from expander import Expander, EXPRESSION_START,  \
     EXPRESSION_END
+from executor import Executor
 
 import unittest
 import numpy as np
 
 
-IGNORE_TEST = False
+IGNORE_TEST = True
 DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3'],
     'c': ['c', '']}
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
@@ -22,7 +23,7 @@ SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
 class TestSubtituter(unittest.TestCase):
 
   def setUp(self):
-    self.expander = Expander({}, DEFINITIONS)
+    self.expander = Expander(Executor())
 
   def testMakeSubtitutionList(self):
     if IGNORE_TEST:
@@ -55,7 +56,9 @@ class TestSubtituter(unittest.TestCase):
   def testDo(self):
     if IGNORE_TEST:
       return
-    expander = Expander({}, DEFINITIONS)
+    executor = Executor()
+    executor.setDefinitions(DEFINITIONS)
+    expander = Expander(executor)
     result = expander.do(SUBSTITUTION1)
     self.assertEqual(result[0], SUBSTITUTION1)
     result = expander.do(SUBSTITUTION2)
@@ -65,7 +68,8 @@ class TestSubtituter(unittest.TestCase):
   def testDoSubstitutionNoDefinition(self):
     if IGNORE_TEST:
       return
-    expander = Expander({}, {})
+    executor = Executor()
+    expander = Expander(executor)
     result = expander.do(SUBSTITUTION1)
     self.assertEqual(result[0], SUBSTITUTION1)
 
@@ -85,9 +89,26 @@ class TestSubtituter(unittest.TestCase):
       self.assertEqual(result[0], expr)
 
   def testExpandTemplateExpressions(self):
-    if IGNORE_TEST:
-      return
-    raise RuntimeError("Not yet implemented")
+    #if IGNORE_TEST:
+    #  return
+    executor = Executor()
+    var = 'n'
+    definitions = {var: [1, 2, 3]}
+    executor.setDefinitions(definitions)
+    expander = Expander(executor)
+    template = "T{%s} + A -> T{%s+1}" % (var, var)
+    expansion = expander.do(template)
+    self.assertEqual(len(expansion), len(definitions[var]))
+    # Check that each substitution is found
+    for value in definitions[var]:
+      found = False
+      for substitution in expansion:
+        if "T%d" % value in substitution:
+          found = True
+          break
+      self.assertTrue(found)
+      
+    
 
 if __name__ == '__main__':
   unittest.main()
