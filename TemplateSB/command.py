@@ -30,7 +30,7 @@ class Command(object):
     self._command_line = command_line
     self._start = False
     self._end = False
-    self._arguments = None  # List of arguments following the command
+    self._arguments = []  # List of arguments following the command
     self._tokens = []
     parsed_line = command_line.split()
     if (parsed_line[0] == COMMAND_START)  \
@@ -52,10 +52,10 @@ class Command(object):
     arguments = []
     msg = None
     if len(tokens) != pos + count:
-      msg = "Expected %d argument(s)" % num_args
+      msg = "Expected %d argument(s)" % count
     else:
       if len(tokens[pos:]) == count:
-        arguments = tokens[1:count]
+        arguments = tokens[1:count+1]
       else:
         msg = "Expected %d argument(s)" % count
     if msg is not None:
@@ -81,7 +81,8 @@ class Command(object):
       else:
         raise ValueError("Unknown command qualifier %s"  \
             % self._tokens[1])
-      self._arguments = cls._extractArguments(self._tokens, 2, num_args)
+      self._arguments = cls._extractArguments(self._tokens,
+          2, num_args)
       is_parsed = True
     else:
       is_parsed = False
@@ -96,7 +97,8 @@ class Command(object):
     cls = Command
     if self._tokens[0] == command_verb:
       self._command_verb = command_verb
-      self._arguments = cls._extractArguments(self._tokens, 1, num_args)
+      self._arguments = cls._extractArguments(self._tokens,
+         1, num_args)
       is_parsed = True
     else:
       is_parsed = False
