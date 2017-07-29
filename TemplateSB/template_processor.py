@@ -136,6 +136,53 @@ class TemplateProcessor(object):
   def _makeComment(line):
     return "%s%s" % (COMMENT_STG, line)
 
+  def _processCommand(self)
+    """
+    Processes the command in the current line.
+    """
+    # Check for nested commands
+    if self._command is not None:
+      new_command = Command(self._current_line)
+      # Is this a paired command?
+      if new_command.getCommandVerb()  \
+          == self._command.getCommandVerb():
+        if new_command.isEnd():
+          self._command = Command(line)
+        else:
+          self._errorMsg("Cannot nest commands")
+    else:
+      self._command = Command(line)
+  if self._command is not None:
+    # Accumulate python codes to execute
+    if self._command.isExecutePython():
+      if self._command.isStart():
+        if line_type != LINE_COMMAND:
+          statements.append(line)
+        expansions.append(cls._makeComment(line))
+      elif self._command.isEnd():
+        try:
+          program = '\n'.join(statements)
+          self._executor.doScript(program)
+        except Exception as err:
+          msg = "***Error %s executing on line %d:\n%s"  \
+              % (err.msg, err.lineno, program)
+          self._errorMsg(msg)
+        statements = []
+        # Reflect updates from Python
+        expansions.append(cls._makeComment(line))
+        self._command = None
+      else:
+        raise RuntimeError("Unexepcted state")
+    # SetVersion command
+    elif self._command.isSetVersion():
+      version = self._command.getArguments()[0]
+      if float(version) > VERSION:
+        self._errorMsg("Unsupported version %s" % version)
+      self._command = None
+    # Other commands
+    else:
+      self._errorMsg("Unknown command")
+
   def do(self):
     """
     Processes the template string and returns the expanded lines for input
@@ -180,7 +227,7 @@ class TemplateProcessor(object):
           elif self._command.isEnd():
             try:
               program = '\n'.join(statements)
-              self._execute.doScript(program)
+              self._executor.doScript(program)
             except Exception as err:
               msg = "***Error %s executing on line %d:\n%s"  \
                   % (err.msg, err.lineno, program)

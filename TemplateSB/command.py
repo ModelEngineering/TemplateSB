@@ -4,8 +4,10 @@
 These commands are indicated by a line that begins
 with {{ and ends with }}.
 Supported commands are:
-  {{ ExecutePython Begin }} - begins a sequence of python codes to execute
-  {{ ExecutePython End }} - ends a sequence of python codes to execute
+  {{ DefineVariables Begin }}
+  {{ DefineVariables End }}
+  {{ DefineConstraints Begin }}
+  {{ DefineConstraints End }}
   {{ SetVersion <version #> }} - Specifies the version number
 """
 
@@ -17,8 +19,9 @@ class Command(object):
   Knows how to parse command lines for the template processor.
   Provides an interface to determine the command.
   """
-  EXECUTE_PYTHON = 1
-  SET_VERSION = 2
+  DEFINE_VARIABLES = "DefineVariables"
+  DEFINE_CONSTRAINTS = "DefineConstraints"
+  SET_VERSION = "SetVersion"
   
   def __init__(self, command_line):
     """
@@ -33,19 +36,43 @@ class Command(object):
     if (parsed_line[0] == COMMAND_START)  \
         and (parsed_line[-1] == COMMAND_END):
       self._tokens = parsed_line[1:-1]
-      self._populateState()
+      self._parseCommand()
     else:
       raise ValueError("Invalid command line")
 
-  def _populateState(self):
+  @classmethod
+  def _extractArguments(cls, tokens, pos, count):
     """
-    Populates the state for the command
+    Extracts the number of arguments from the tokens
+    :param list-of-str tokens:
+    :param int pos: position to start finding arguments
+    :param int count:
+    :return list_of_str:
+    """
+    arguments = []
+    msg = None
+    if len(tokens) != pos + count:
+      msg = "Expected %d argument(s)" % num_args
+    else:
+      if len(tokens[pos:]) == count:
+        arguments = tokens[1:count]
+      else:
+        msg = "Expected %d argument(s)" % count
+    if msg is not None:
+      raise ValueError(msg)
+    return arguments
+
+  def _parsePairedCommands(self, command_verb, num_args=0):
+    """
+    Parses commands that are paired with Start and End
+    :param str command_verb:
+    :param int num_args: number of arguments in command
     """
     cls = Command
-    if self._tokens[0] == "ExecutePython":
-      self._command_verb = cls.EXECUTE_PYTHON
-      if len(self._tokens) != 2:
-        raise ValueError("Exactly one qualifier is required for %s"
+    if self._tokens[0] == command_verb:
+      self._command_verb = command_verb
+      if len(self._tokens) < 2:
+        raise ValueError("Exactly qualifier is required for %s"
             % self._tokens[0])
       if self._tokens[1] == "Start":
         self._start = True
@@ -54,20 +81,51 @@ class Command(object):
       else:
         raise ValueError("Unknown command qualifier %s"  \
             % self._tokens[1])
-    elif self._tokens[0] == "SetVersion":
-      self._command_verb = cls.SET_VERSION
-      self._arguments = self._tokens[1:]
-      if len(self._arguments) != 1:
-        raise ValueError("Only one argument for SetVersion")
+      self._arguments = cls._extractArguments(self._tokens, 2, num_args)
+      is_parsed = True
+    else:
+      is_parsed = False
+    return is_parsed
+
+  def _parseUnpairedCommands(self, command_verb, num_args):
+    """
+    Parses commands that are paired with Start and End
+    :param str command_verb:
+    :param int num_args: number of arguments in command
+    """
+    cls = Command
+    if self._tokens[0] == command_verb:
+      self._command_verb = command_verb
+      self._arguments = cls._extractArguments(self._tokens, 1, num_args)
+      is_parsed = True
+    else:
+      is_parsed = False
+    return is_parsed
+
+  def _parseCommand(self):
+    """
+    Populates the state for the command
+    """
+    cls = Command
+    if self._parsePairedCommands(cls.DEFINE_VARIABLES):
+      pass
+    elif self._parsePairedCommands(cls.DEFINE_CONSTRAINTS):
+      pass
+    elif self._parseUnpairedCommands(cls.SET_VERSION, 1):
+      pass
     else:
       raise ValueError("Unknown command %s" % self._tokens[0])
 
   def __str__(self):
     return self._command_line
 
-  def isExecutePython(self):
+  def isDefineVariables(self):
     cls = Command
-    return self._command_verb == cls.EXECUTE_PYTHON
+    return self._command_verb == cls.DEFINE_VARIABLES
+
+  def isDefineConstraints(self):
+    cls = Command
+    return self._command_verb == cls.DEFINE_CONSTRAINTS
 
   def isStart(self):
     return self._start

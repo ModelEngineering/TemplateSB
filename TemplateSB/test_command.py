@@ -6,10 +6,12 @@ import unittest
 
 IGNORE_TEST = False
 DUMMY_VERSION = '1.4'
-PYTHON_START = "%s ExecutePython Start %s" % (COMMAND_START, COMMAND_END)
-PYTHON_END = "%s ExecutePython End %s" % (COMMAND_START, COMMAND_END)
-SET_VERSION = "%s SetVersion %s %s"   \
-    % (COMMAND_START, DUMMY_VERSION, COMMAND_END)
+DEFINE_VARIABLES_START = "%s %s Start %s" % (COMMAND_START, Command.DEFINE_VARIABLES, COMMAND_END)
+DEFINE_VARIABLES_START = "%s %s End %s" % (COMMAND_START, Command.DEFINE_VARIABLES, COMMAND_END)
+DEFINE_CONSTRAINTS_START = "%s %s Start %s" % (COMMAND_START, Command.DEFINE_CONSTRAINTS, COMMAND_END)
+DEFINE_CONSTRAINTS_START = "%s %s End %s" % (COMMAND_START, Command.DEFINE_CONSTRAINTS, COMMAND_END)
+SET_VERSION = "%s %s %s %s"   \
+    % (COMMAND_START, Command.SET_VERSION, DUMMY_VERSION, COMMAND_END)
 
 
 #############################
@@ -19,7 +21,7 @@ SET_VERSION = "%s SetVersion %s %s"   \
 class TestCommand(unittest.TestCase):
 
   def setUp(self):
-    self.command = Command(PYTHON_START)
+    self.command = Command(DEFINE_VARIABLES_START)
 
   def _testConstructor(self, command_line, command_verb, arguments):
     """
@@ -37,21 +39,27 @@ class TestCommand(unittest.TestCase):
   def testConstructor(self):
     if IGNORE_TEST:
       return
-    self.command = Command(PYTHON_START)
-    self._testConstructor(PYTHON_START, Command.EXECUTE_PYTHON, None)
+    self.command = Command(DEFINE_VARIABLES_START)
+    self._testConstructor(DEFINE_VARIABLES_START, Command.DEFINE_VARIABLES, None)
     self.assertTrue(self.command.isStart())
     self.assertFalse(self.command.isEnd())
-    self.command = Command(PYTHON_END)
-    self._testConstructor(PYTHON_END, Command.EXECUTE_PYTHON, None)
+    self.command = Command(DEFINE_VARIABLES_END)
+    self._testConstructor(DEFINE_VARIABLES_END, Command.DEFINE_VARIABLES, None)
     self.command = Command(SET_VERSION)
     self._testConstructor(SET_VERSION, Command.SET_VERSION,
         [DUMMY_VERSION])
 
-  def testIsExecuePython(self):
+  def testIsDefineConstraints(self):
     if IGNORE_TEST:
       return
-    self.command = Command(PYTHON_START)
-    self.assertTrue(self.command.isExecutePython())
+    self.command = Command(DEFINE_CONSTRAINTS_START)
+    self.assertTrue(self.command.isDefineConstraints())
+
+  def testIsDefineVariables(self):
+    if IGNORE_TEST:
+      return
+    self.command = Command(DEFINE_VARIABLES_START)
+    self.assertTrue(self.command.isDefineVariables())
 
   def testIsSetVersion(self):
     if IGNORE_TEST:
@@ -62,20 +70,20 @@ class TestCommand(unittest.TestCase):
   def testIsStart(self):
     if IGNORE_TEST:
       return
-    self.command = Command(PYTHON_START)
+    self.command = Command(DEFINE_VARIABLES_START)
     self.assertTrue(self.command.isStart())
 
   def testIsEnd(self):
     if IGNORE_TEST:
       return
-    self.command = Command(PYTHON_END)
+    self.command = Command(DEFINE_VARIABLES_END)
     self.assertTrue(self.command.isEnd())
 
   def testStr(self):
     if IGNORE_TEST:
       return
-    self.command = Command(PYTHON_START)
-    self.assertEqual(str(self.command), PYTHON_START)
+    self.command = Command(DEFINE_VARIABLES_START)
+    self.assertEqual(str(self.command), DEFINE_VARIABLES_START)
 
   def testInvalidCommandLine(self):
     if IGNORE_TEST:
@@ -87,13 +95,13 @@ class TestCommand(unittest.TestCase):
     with self.assertRaises(ValueError):
       command = Command("{{ This is Junk }}")
 
-  def testInvalidExecutePython(self):
+  def testInvalidDefineVariables(self):
     if IGNORE_TEST:
       return
     with self.assertRaises(ValueError):
-      command = Command("{{ ExecutePython }}")
+      command = Command("{{ DefineVariables }}")
     with self.assertRaises(ValueError):
-      command = Command("{{ ExecutePython Dummy }}")
+      command = Command("{{ DefineVariables Dummy }}")
 
   def testInvalidSetVersion(self):
     if IGNORE_TEST:
