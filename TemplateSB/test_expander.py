@@ -1,15 +1,15 @@
 """
 Tests for Expander
 """
-from expander import Expander, EXPRESSION_START,  \
-    EXPRESSION_END
+from expander import Expander
+from expander import EXPRESSION_START, EXPRESSION_END
 from executor import Executor
 
 import unittest
 import numpy as np
 
 
-IGNORE_TEST = True
+IGNORE_TEST = False
 DEFINITIONS = {'a': ['a', 'b', 'c'], 'm': ['1', '2', '3'],
     'c': ['c', '']}
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
@@ -41,17 +41,38 @@ class TestSubtituter(unittest.TestCase):
     self.assertEqual(len(substitution_list), expected)
 
   def testGetTemplateExpressions(self):
-    return
     if IGNORE_TEST:
       return
-    variables = self.expander._getTemplateVariables("x{a} -> x + {a}; k*{a}")
-    self.assertEqual(variables,["{a}"])
-    variables = self.expander._getTemplateVariables("x{a} -> x + {b}; k*{a}")
-    self.assertEqual(variables, ["{a}", "{b}"])
-    variables = self.expander._getTemplateVariables("x{a} -> x + { b }; k*{a}")
-    self.assertEqual(variables, ["{a}", "{b}"])
-    variables = self.expander._getTemplateVariables("x{a} -> x + { 1, 2,3 }; k*{a}")
-    self.assertEqual(set(variables), set(["{a}", "{1,2,3}"]))
+    expression1 = "a + b"
+    expression2 = "x"
+    expression3 = "cos(a) + sin(b)"
+    proto_template = "xy%s%s%sz + yz%s%s%sx"  
+    for expr in [expression1, expression2, expression3]:
+      template = proto_template % (
+          EXPRESSION_START, expr, EXPRESSION_END,
+          EXPRESSION_START, expr, EXPRESSION_END)
+      result = self.expander.getTemplateExpressions(template)
+      self.assertEqual(len(result), 1)
+      self.assertEqual(result[0], expr)
+
+  def _testGetTemplateExpression(self, line, expecteds):
+    if IGNORE_TEST:
+      return
+    expressions = self.expander.getTemplateExpressions(line)
+    self.assertEqual(set(expressions), set(expecteds))
+
+  def testGetTemplateExpressions2(self):
+    if IGNORE_TEST:
+      return
+    self._testGetTemplateExpression("x{a} -> x + {a}; k*{a}", ["a"])
+    self._testGetTemplateExpression("x{a} -> x + {b}; k*{a}",
+        ["a", "b"])
+    self._testGetTemplateExpression("x{a} -> x + { b }; k*{a}",
+        ["a", "b"])
+    self._testGetTemplateExpression("T{n} + A -> A + T{n+1}",
+        ["n", "n+1"])
+    self._testGetTemplateExpression("T{n} + A -> A + T{n+1} + T{2*n + n }",
+        ["n", "n+1", "2*n + n"])
     
   def testDo(self):
     if IGNORE_TEST:
@@ -73,24 +94,9 @@ class TestSubtituter(unittest.TestCase):
     result = expander.do(SUBSTITUTION1)
     self.assertEqual(result[0], SUBSTITUTION1)
 
-  def testGetTemplateExpressions(self):
+  def testExpandTemplateExpressions(self):
     if IGNORE_TEST:
       return
-    expression1 = "a + b"
-    expression2 = "x"
-    expression3 = "cos(a) + sin(b)"
-    proto_template = "xy%s%s%sz + yz%s%s%sx"  
-    for expr in [expression1, expression2, expression3]:
-      template = proto_template % (
-          EXPRESSION_START, expr, EXPRESSION_END,
-          EXPRESSION_START, expr, EXPRESSION_END)
-      result = self.expander.getTemplateExpressions(template)
-      self.assertEqual(len(result), 1)
-      self.assertEqual(result[0], expr)
-
-  def testExpandTemplateExpressions(self):
-    #if IGNORE_TEST:
-    #  return
     executor = Executor()
     var = 'n'
     definitions = {var: [1, 2, 3]}

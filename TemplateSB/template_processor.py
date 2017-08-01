@@ -22,8 +22,8 @@ Notes
 
 from executor import Executor
 from command import Command, COMMAND_START, COMMAND_END
-from expander import Expander, EXPRESSION_START,  \
-    EXPRESSION_END
+from expander import Expander
+from constants import EXPRESSION_START, EXPRESSION_END
 import fileinput
 import sys
 

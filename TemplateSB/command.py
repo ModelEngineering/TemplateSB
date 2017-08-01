@@ -11,8 +11,7 @@ Supported commands are:
   {{ SetVersion <version #> }} - Specifies the version number
 """
 
-COMMAND_START = "{{"
-COMMAND_END = "}}"
+from constants import COMMAND_START, COMMAND_END
 
 class Command(object):
   """

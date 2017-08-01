@@ -1,7 +1,8 @@
 """
 Tests for Command
 """
-from command import Command, COMMAND_START, COMMAND_END
+from command import Command
+from constants import COMMAND_START, COMMAND_END
 import unittest
 
 IGNORE_TEST = False

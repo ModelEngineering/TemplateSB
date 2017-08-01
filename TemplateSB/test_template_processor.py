@@ -1,9 +1,8 @@
 """
 Tests for TemplateProcessor
 """
-from template_processor import TemplateProcessor, LINE_TRAN,  \
-    LINE_SUBS, LINE_COMMAND, CONTINUED_STG
-from command import COMMAND_START, COMMAND_END
+from template_processor import TemplateProcessor
+from constants import COMMAND_START, COMMAND_END
 
 import copy
 import unittest
@@ -67,68 +66,11 @@ class TestTemplateProcessor(unittest.TestCase):
       return
     self.assertTrue(len(self.processor._lines) > 0)
 
-  def testClassifyLine(self):
-    if IGNORE_TEST:
-      return
-    self.processor._current_line = COMMAND_START
-    self.assertEqual(self.processor._classifyLine(), LINE_COMMAND)
-    self.processor._current_line = SUBSTITUTION1
-    self.assertEqual(self.processor._classifyLine(), LINE_TRAN)
-    self.processor._current_line = SUBSTITUTION2
-    self.assertEqual(self.processor._classifyLine(), LINE_SUBS)
-
   def testErrorMsg(self):
     if IGNORE_TEST:
       return
     with self.assertRaises(ValueError):
       self.processor._errorMsg("")
-
-  def testGetNextLine(self):
-    if IGNORE_TEST:
-      return
-    processor = TemplateProcessor(TEMPLATE_STG2)
-    line = processor._getNextLine()
-    lines = []
-    idx = 0
-    expecteds = TEMPLATE_STG2.split('\n')
-    while line is not None:
-      expected = expecteds[idx].strip()
-      idx += 1
-      lines.append(line)
-      self.assertEqual(line, expected)
-      line = processor._getNextLine()
-    expected = len(expecteds)
-    self.assertEqual(expected, len(lines))
-
-  def testGetNextLineContinued(self):
-    line_1 = "Line part 1."
-    line_2 = "Line part 2."
-    line = "%s %s\n%s" % (line_1, CONTINUED_STG, line_2)
-    processor = TemplateProcessor(line)
-    result = processor._getNextLine()
-    self.assertTrue(line_1 in result)
-    self.assertTrue(line_2 in result)
-
-  def testGetNextLineContinuation(self):
-    if IGNORE_TEST:
-      return
-    stg = '''this \
-    is a \
-    continuation.'''
-    processor = TemplateProcessor(stg)
-    line = processor._getNextLine()
-    self.assertTrue("is a" in line)
-    self.assertTrue("continuation" in line)
-    line = processor._getNextLine()
-    self.assertIsNone(line)
-
-  def testExecuteStatements(self):
-    if IGNORE_TEST:
-      return
-    template = TemplateProcessor(COMMAND)
-    self.assertEqual(len(template._definitions.keys()), 0)
-    result = template.do()
-    self.assertEqual(result.count('\n'), COMMAND.count('\n'))
 
   def _testExpand(self, template, variable):
     """
@@ -168,31 +110,6 @@ class TestTemplateProcessor(unittest.TestCase):
     src_path = os.path.join(parent_path, "Example")
     src_path = os.path.join(src_path, "sample.tmpl")
     TemplateProcessor.processFile(src_path, "/tmp/out.mdl")
-
-  def testExecuteStatements(self):
-    if IGNORE_TEST:
-      return
-    var1 = 'aa'
-    var2 = 'bb'
-    value1 = 1
-    const2 = 5
-    statements = ["%s = %d" % (var1, value1), 
-        "%s = %d*%s" % (var2, const2, var1)]
-    self.processor._execute_statements(statements)
-    self.assertEqual(self.processor._namespace['aa'], value1)
-    self.assertEqual(self.processor._namespace['bb'], value1*const2)
-
-  def testExecuteStatementsError(self):
-    if IGNORE_TEST:
-      return
-    var1 = 'aa'
-    var2 = 'bb'
-    value1 = 1
-    const2 = 5
-    statements = ["%s = " % (var1), 
-        "%s = %d*%s" % (var2, const2, var1)]
-    with self.assertRaises(ValueError):
-      self.processor._execute_statements(statements)
     
 
 if __name__ == '__main__':

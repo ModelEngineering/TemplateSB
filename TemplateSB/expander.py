@@ -1,9 +1,8 @@
 '''Class that does string expansion using template expressions.'''
 
+from constants import EXPRESSION_START, EXPRESSION_END
 import re
 
-EXPRESSION_START = "{"
-EXPRESSION_END = "}"
 
 class Expander(object):
   """
@@ -66,7 +65,7 @@ class Expander(object):
        % (self._left_delim, self._left_delim, self._right_delim)
     pat = re.compile(pattern_str)  # Single template variable
     raw_expressions = set(pat.findall(stg))
-    expressions = [e[1:-1] for e in raw_expressions]
+    expressions = [e[1:-1].strip() for e in raw_expressions]
     return expressions
       
   def do(self, segment):
