@@ -13,7 +13,7 @@ import os
 
 IGNORE_TEST = False
 DEFINITIONS = {'a': ['a', 'b', 'c'], 
-               'm': ['1', '2', '3'],
+               'm': [1, 2, 3],
                'c': ['c', '']}
 COMMAND = \
 '''%s DefineVariables Begin %s
@@ -25,6 +25,7 @@ api.addDefinitions(DEFINITIONS)
 SUBSTITUTION1 = "J1: S1 -> S2; k1*S1"
 SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
 SUBSTITUTION3 = "J{c}1: S{c}1 -> S{c}2; k1*S{c}1"
+SUBSTITUTION4 = "J{m}: S{m} -> S{m+1}; k1*S{m}"
 TEMPLATE_STG1 = '''
 %s
 %s
@@ -36,6 +37,9 @@ TEMPLATE_STG2 = '''%s
 TEMPLATE_STG3 = '''%s
 %s''' % (COMMAND, SUBSTITUTION3)
 TEMPLATE_NO_DEFINITION = SUBSTITUTION3
+TEMPLATE_STG4 = '''%s
+%s''' % (COMMAND, SUBSTITUTION4)
+TEMPLATE_NO_DEFINITION = SUBSTITUTION4
 
 
 def isSubDict(dict_super, dict_sub):
@@ -80,14 +84,23 @@ class TestTemplateProcessor(unittest.TestCase):
     """
     self.processor = TemplateProcessor(template)
     lines = self.processor.do()
-    for val in DEFINITIONS[variable]:
-      self.assertTrue("J%s1:" % val in lines)
+    try:
+      for val in DEFINITIONS[variable]:
+        str_val = "J%s" % str(val)
+        if not str_val in lines:
+          import pdb; pdb.set_trace()
+        self.assertTrue(str_val in lines)
+    except Exception as exp:
+      import pdb; pdb.set_trace()
+      pass
+    
 
   def testDo(self):
     if IGNORE_TEST:
       return
     self._testExpand(TEMPLATE_STG2, 'a')
     self._testExpand(TEMPLATE_STG3, 'c')
+    self._testExpand(TEMPLATE_STG4, 'm')
 
   def testDo2(self):
     template = '''
