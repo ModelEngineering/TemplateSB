@@ -9,7 +9,7 @@ from command import COMMAND_START, COMMAND_END
 import unittest
 
 
-IGNORE_TEST = True
+IGNORE_TEST = False
 COMMAND = "%s ExecutePython Start %s" %(COMMAND_START, COMMAND_END)
 TEMPLATE_TRAN =  \
 '''This is a line.
@@ -82,12 +82,13 @@ class TestLineExtractor(unittest.TestCase):
   def _testClassifyLine(self, template, expected_classification):
     extractor= LineExtractor(template)
     extractor._getNextLine()
-    import pdb; pdb.set_trace()
-    self.assertEqual(extractor._classifyLine(), expected_classification)
+    extractor._classifyLine()
+    self.assertEqual(extractor.getCurrentLineType(), 
+        expected_classification)
 
   def testClassifyLine(self):
-    #if IGNORE_TEST:
-    #  return
+    if IGNORE_TEST:
+      return
     self._testClassifyLine(TEMPLATE_TRAN, LINE_TRAN)
     self._testClassifyLine(TEMPLATE_SUBS, LINE_SUBS)
     self._testClassifyLine(TEMPLATE_COMMAND, LINE_COMMAND)

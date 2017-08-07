@@ -20,10 +20,10 @@ Note that the reactions are independent of phosphorylation and ligand binding in
 
 With TemplateSB, the complete set of 12 reactions can be expressed in a more compact way. 
 Templates provide a way to describe model elements using expressions.
-A template variable or expression is surrounded by curly braces ("{", "}").
-Consider the template variable {L}.
-Further, by default this variable has two expansions: "L" and "".
-The template variable {p} is handled in the same way.
+A template variable or expression is surrounded by curly braces (`{`, `}`).
+Consider the template variable `{L}`.
+Further, by default this variable has two expansions: `L` and "".
+The template variable `{p}` is handled in the same way.
 Thus, the above four reactions can be expressed as a single templated reaction:
 
 <pre>
@@ -31,29 +31,28 @@ Thus, the above four reactions can be expressed as a single templated reaction:
 </pre>
 
 The template processor expands this expression into the above four reactions.
-That is, the first reaction above is realized by assigning '' (the null string) both {L} and {p}. 
+That is, the first reaction above is realized by assigning '' (the null string) to both `{L}` and `{p}`. 
 The other four reactions are constructed by using the other three combinations of the values of template variables. Note that both kinetics expressions and reaction labels can use template variables.
 
 TemplateSB responds to several commands dictating how lines should be expanded.
-Commands are enclosed in double braces ("{{" and "}}"). Supported commands are:
-{{ ExecutePython Start }} - beginning of Python codes to execute
-{{ ExecutePython End }} - end of Python codes to execute
+Commands are enclosed in double braces (`{{` and `}}`). Supported commands are:
+`{{ DefineVariables Begin }}` - beginning of Python codes to execute
+`{{ DefineVariables End }}` - end of Python codes to execute
 
 Below is a description of the function of these commands.
 
-- Codes between ExecutePython Start and End commands are used to specify template variables used in expansions.
+- Codes between `DefineVariables Begin` and `DefineVariables End` commands are used to specify template variables used in expansions.
   This is done using the api object. For example,
   <pre>
-  {{ ExecutePython Start }}
+  {{ DefineVariables Start }}
   api.addDefinitions({'p': ['p', '']})
-  {{ ExecutePython End }}
+  {{ DefineVariables End }}
   </pre>
   Defines the variable "p" as having the values '' and 'p'.
 
 Below is a representation in templates of the 64 methylation 
-reactions (24 reactions for each of
-J1\* and J2\* and 8 reactions for each of 
-J3\*2\* and J3\*3\*) as required by the Spiro model.
+reactions 
+in the Spiro model.
 TemplateSB uses a Python code to specify how processing should proceed
 based on opertions on the object api.
 In particular, api.addDefinitions takes a dictionary as its arguement.
@@ -61,9 +60,9 @@ The keys are template variables; the associated values are the possible
 values that can be assigned to the template variable.
 
 <pre>
-{{ ExecutePython Start }}
+{{ DefineVariables Start }}
 api.addDefinitions({‘p’:[‘p’,‘’], ‘L’:[‘L’,‘’], ‘r’:[‘R’,‘’], ‘m’:[‘2’, ‘3’, ‘4’]})
-{{ ExecutePython End }}
+{{ DefineVariables End }}
  
 J1{L}{m}{p}: {L}T{m}{p} + R -> {L}T{m}{p}R; k1{m}*{L}T{m}{p}*R
 J2{L}{m}{p}: {L}T{m}{p}R -> {L}T{m}{p} + R; k2{m}*{L}T{m}{p}R
@@ -71,7 +70,7 @@ J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32*{L}T2{p}R
 J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33*{L}T3{p}R
 </pre>
 
-One possible extension is to permit having a python expression inside a template instance (within “{“ and “}”). This feature would eliminate one of the templated model lines in the above model by using {m+1} as a template instance.
+One possible extension is to permit having a python expression inside a template instance (within `{` and `}`). This feature would eliminate one of the templated model lines in the above model by using {m+1} as a template instance.
 
 The repository is organized as follows:
 

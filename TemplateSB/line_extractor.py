@@ -1,8 +1,9 @@
 '''Class for extracting a line from a template.'''
 
 from command import COMMAND_START, COMMAND_END
-from constants import SPLIT_STG, COMMENT_STG, CONTINUED_STG,
-    LINE_TRAN, LINE_COMMAND, LINE_SUBS, LINE_NONE
+from constants import SPLIT_STG, COMMENT_STG, CONTINUED_STG,  \
+    LINE_TRAN, LINE_COMMAND, LINE_SUBS, LINE_NONE,  \
+    EXPRESSION_START, EXPRESSION_END
 
 
 class LineExtractor(object):
@@ -20,6 +21,7 @@ class LineExtractor(object):
     self._lines = input_lines.split(SPLIT_STG)
     self._source_line_number = 0
     self._current_line = None  # Complete line extracted from input
+    self._current_line_type = None
 
   def _classifyLine(self):
     """
@@ -29,13 +31,16 @@ class LineExtractor(object):
       LINE_COMMAND: Template processor command
     State used:
       reads: _current_line
-    :return int: see LINE_* for interpretation
     """
     if self._current_line is None:
       result = LINE_NONE
     else:
       text = self._current_line.strip()
-      if text[0] == COMMENT_STG or len(text) == 0:
+      if len(text) == 0:
+        result = LINE_NONE
+      elif text[0] == COMMENT_STG or len(text) == 0:
+        result = LINE_TRAN
+      elif len(text) < 2:
         result = LINE_TRAN
       elif text[0:2] == COMMAND_START:
         result = LINE_COMMAND
@@ -44,7 +49,7 @@ class LineExtractor(object):
         result = LINE_TRAN
       else:
         result = LINE_SUBS
-    return result
+    self._current_line_type = result
 
   def _getNextLine(self, strip=True):
     """
@@ -53,7 +58,6 @@ class LineExtractor(object):
       references: _source_line_number, _lines
       updates: _current_line, _source_line_number
     :parm bool strip: flag to indicate if white space should be stripped
-    :return str: Current line with continuations
     """
     self._current_line = None
     while self._source_line_number < len(self._lines):
@@ -82,11 +86,14 @@ class LineExtractor(object):
     if self._current_line is None:
       line_type = LINE_NONE
     else:
-      line_type = self._classifyLine(self)
-    return self._current_line, line_type
+      self._classifyLine()
+    return self._current_line, self._current_line_type
 
   def getCurrentLine(self):
     return self._current_line
 
   def getCurrentSourceLineNumber(self):
     return self._source_line_number
+
+  def getCurrentLineType(self):
+    return self._current_line_type

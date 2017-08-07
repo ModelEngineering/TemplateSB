@@ -23,19 +23,13 @@ Notes
 from executor import Executor
 from command import Command, COMMAND_START, COMMAND_END
 from expander import Expander
-from constants import EXPRESSION_START, EXPRESSION_END
+from constants import EXPRESSION_START, EXPRESSION_END,  \
+  VERSION, SPLIT_STG, COMMENT_STG,  \
+  CONTINUED_STG, LINE_TRAN, LINE_COMMAND, LINE_SUBS, LINE_NONE
+from line_extractor import LineExtractor
 import fileinput
 import sys
 
-
-VERSION = "1.1"
-SPLIT_STG = "\n"
-COMMENT_STG = "#"
-CONTINUED_STG = "\\"  # Indicates a continuation follows
-LINE_TRAN = 1  # Transparent - nothing to process (comment line, no template variable)
-LINE_COMMAND = 2  # Command line
-LINE_SUBS = 3  # Line to be processed for substitutions
- 
 
 class TemplateProcessor(object):
   """
@@ -47,13 +41,12 @@ class TemplateProcessor(object):
     :param str template_string: string containing template variables
         and template escape statements to execute
     """
-    self._template_string = template_string
-    self._lines = self._template_string.split(SPLIT_STG)
+    self._extractor = LineExtractor(template_string)
     self._executor = Executor()
     self._expander = Expander(self._executor)
-    self._lineno = 0
-    self._current_line = None  # Complete line extracted from input
     self._command = None  # Command being processed
+    self._define_variable_statements = []
+    self._define_constraints_statements = []
 
   @classmethod
   def processFile(cls, inpath, outpath):
@@ -71,117 +64,77 @@ class TemplateProcessor(object):
     with open(outpath, 'w') as outfile:
       outfile.write(expansion)
 
-  def _classifyLine(self):
-    """
-    Classifies a line as:
-      LINE_TRAN: Transparent - nothing to process (comment line, no template variable)
-      LINE_SUBS: Substitution line
-      LINE_COMMAND: Template processor command
-    State used:
-      reads: _current_line
-    :return int: see LINE_* for interpretation
-    """
-    text = self._current_line.strip()
-    if len(text) == 0:
-      result = LINE_TRAN
-    elif text[0] == COMMENT_STG or len(text) == 0:
-      result = LINE_TRAN
-    elif text[0:2] == COMMAND_START:
-      result = LINE_COMMAND
-    elif text.count(EXPRESSION_START) == 0 and  \
-        text.count(EXPRESSION_END) == 0:
-      result = LINE_TRAN
-    else:
-      result = LINE_SUBS
-    return result
-
   def _errorMsg(self, msg):
     """
     :param str msg:
     :raises ValueError:
     """
     error = "on line %d.\n'%s'\nError message: %s"  \
-        % (self._lineno, self._current_line, msg)
+        % (self._extractor.getCurrentSourceLineNumber(), 
+           self._extractor.getCurrentLine(), msg)
     raise ValueError(error)
-
-  def _getNextLine(self, strip=True):
-    """
-    Gets the next line, handling continued lines.
-    State used:
-      references: _lineno, _lines
-      updates: _current_line, _lineno
-    :parm bool strip: flag to indicate if white space should be stripped
-    :return str: Current line with continuations
-    """
-    self._current_line = None
-    while self._lineno < len(self._lines):
-      if self._current_line is None:
-        self._current_line = ""
-      if strip:
-        text = self._lines[self._lineno].strip()
-      else:
-        text = self._lines[self._lineno]
-      self._lineno += 1
-      if len(text) == 0:
-        continue
-      if text[-len(CONTINUED_STG)] == CONTINUED_STG:
-        self._current_line = self._current_line  \
-            + text[0:-len(CONTINUED_STG)]
-      else:
-        self._current_line = self._current_line + text
-        break
-    return self._current_line
 
   @staticmethod
   def _makeComment(line):
     return "%s%s" % (COMMENT_STG, line)
 
-  def _processCommand(self)
+  def _processCommand(self):
     """
-    Processes the command in the current line.
+    Handles command processing, either the current line
+    is a command or in the midst of processing a paired command.
+    :param list-of-str expansion:
+    :return bool: True if processed line
     """
-    # Check for nested commands
-    if self._command is not None:
-      new_command = Command(self._current_line)
-      # Is this a paired command?
-      if new_command.getCommandVerb()  \
-          == self._command.getCommandVerb():
-        if new_command.isEnd():
-          self._command = Command(line)
-        else:
-          self._errorMsg("Cannot nest commands")
-    else:
+    line = self._extractor.getCurrentLine()
+    line_type = self._extractor.getCurrentLineType()
+    is_processed = False
+    # Current line is a command
+    if line_type == LINE_COMMAND:
+      is_processed = True
+      # Check for nested commands
+      if self._command is not None:
+        new_command = Command(line)
+        # Is this a paired command?
+        if new_command.getCommandVerb()  \
+            == self._command.getCommandVerb():
+          if new_command.isEnd():
+            pass
+          else:
+            self._errorMsg("Cannot nest commands")
+      # Valid placement for a command.
       self._command = Command(line)
-  if self._command is not None:
-    # Accumulate python codes to execute
-    if self._command.isExecutePython():
-      if self._command.isStart():
-        if line_type != LINE_COMMAND:
-          statements.append(line)
-        expansions.append(cls._makeComment(line))
-      elif self._command.isEnd():
-        try:
-          program = '\n'.join(statements)
-          self._executor.doScript(program)
-        except Exception as err:
-          msg = "***Error %s executing on line %d:\n%s"  \
-              % (err.msg, err.lineno, program)
-          self._errorMsg(msg)
-        statements = []
-        # Reflect updates from Python
-        expansions.append(cls._makeComment(line))
+      # DefineVariables Command
+      if self._command.isDefineVariables():
+        if self._command.isBegin():
+          self._define_variables_statements = []
+        elif self._command.isEnd():
+          try:
+            program = '\n'.join(self._define_variables_statements)
+            self._executor.doScript(program)
+          except Exception as err:
+            msg = "***Error %s executing on line %d:\n%s"  \
+                % (err.msg, err.lineno, program)
+            self._errorMsg(msg)
+          self._command = None
+      # SetVersion command
+      elif self._command.isSetVersion():
+        version = self._command.getArguments()[0]
+        if float(version) > VERSION:
+          self._errorMsg("Unsupported version %s" % version)
         self._command = None
+      # Other commands
       else:
-        raise RuntimeError("Unexepcted state")
-    # SetVersion command
-    elif self._command.isSetVersion():
-      version = self._command.getArguments()[0]
-      if float(version) > VERSION:
-        self._errorMsg("Unsupported version %s" % version)
-      self._command = None
-    # Other commands
-    else:
-      self._errorMsg("Unknown command")
+        self._errorMsg("Unknown command")
+    # Process statements occurring within paired commands
+    elif self._command is not None:
+      is_processed = True
+      if self._command.isDefineVariables() and self._command.isBegin():
+        self._define_variables_statements.append(line)
+      elif self._command.isDefineConstraints() and self._command.isBegin():
+        self._define_constraints_statements.append(line)
+      else:
+        self._errorMsg("Invalid paired command.")
+    return is_processed
 
   def do(self):
     """
@@ -198,81 +151,35 @@ class TemplateProcessor(object):
     :raises ValueError: errors encountered in the template string
     """
     cls = TemplateProcessor
-    expansions = []
-    line = self._getNextLine()
+    expansion = []
+    line, line_type = self._extractor.do()
     statements = []
-    while line is not None:  # End of input if None
-      line_type = self._classifyLine()
-      # Handlie line specially if there is a command in effect
-      # Paired commands (e.g., Start, End pairs) use self._command
-      # as state to indicate that they are in a command block.
-      if line_type == LINE_COMMAND:
-        if self._command is not None:
-          new_command = Command(line)
-          if new_command.getCommandVerb()  \
-              == self._command.getCommandVerb():
-            if new_command.isEnd():
-              self._command = Command(line)
-            else:
-              self._errorMsg("Cannot nest commands")
-        else:
-          self._command = Command(line)
-      if self._command is not None:
-        # Accumulate python codes to execute
-        if self._command.isExecutePython():
-          if self._command.isStart():
-            if line_type != LINE_COMMAND:
-              statements.append(line)
-            expansions.append(cls._makeComment(line))
-          elif self._command.isEnd():
-            try:
-              program = '\n'.join(statements)
-              self._executor.doScript(program)
-            except Exception as err:
-              msg = "***Error %s executing on line %d:\n%s"  \
-                  % (err.msg, err.lineno, program)
-              self._errorMsg(msg)
-            statements = []
-            # Reflect updates from Python
-            expansions.append(cls._makeComment(line))
-            self._command = None
-          else:
-            raise RuntimeError("Unexepcted state")
-        # SetVersion command
-        elif self._command.isSetVersion():
-          version = self._command.getArguments()[0]
-          if float(version) > VERSION:
-            self._errorMsg("Unsupported version %s" % version)
-          self._command = None
-        # Other commands
-        else:
-          self._errorMsg("Unknown command")
+    while line is not None:
+      if self._processCommand():
+        expansion.append(cls._makeComment(line))
       # No command being processed
       else:
         # Transparent line (comment)
         if line_type == LINE_TRAN:
-          expansions.append(line)
+          expansion.append(line)
+        elif line_type == LINE_NONE:
+          pass
         # Line to be substituted
         elif line_type == LINE_SUBS:
           # Do the variable substitutions
           try:
-            expansion = self._expander.do(line)
+            substitutions = self._expander.do(line)
           except Exception as err:
             msg = "Runtime error in expression"
             self._errorMsg(msg)
-          if len(expansion) > 1:
-            expansions.append(cls._makeComment(line))
-          expansions.extend(expansion)
+          if len(substitutions) > 1:
+            expansion.append(cls._makeComment(line))
+          expansion.extend(substitutions)
         else:
+          import pdb; pdb.set_trace()
           raise RuntimeError("Unexepcted state")
-      line = self._getNextLine(strip=(self._command is None))
+      line, line_type = self._extractor.do()
     if self._command is not None:
       msg = "Still processing command %s at EOF" % str(self._command)
       self._errorMsg(msg)
-    return "\n".join(expansions)
-
-  def get(self):
-    """
-    :return str: template
-    """
-    return self._template_string
+    return "\n".join(expansion)

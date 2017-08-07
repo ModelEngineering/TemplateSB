@@ -7,9 +7,9 @@ import unittest
 
 IGNORE_TEST = False
 DUMMY_VERSION = '1.4'
-DEFINE_VARIABLES_START = "%s %s Start %s" % (COMMAND_START, Command.DEFINE_VARIABLES, COMMAND_END)
+DEFINE_VARIABLES_BEGIN = "%s %s Begin %s" % (COMMAND_START, Command.DEFINE_VARIABLES, COMMAND_END)
 DEFINE_VARIABLES_END = "%s %s End %s" % (COMMAND_START, Command.DEFINE_VARIABLES, COMMAND_END)
-DEFINE_CONSTRAINTS_START = "%s %s Start %s" % (COMMAND_START, Command.DEFINE_CONSTRAINTS, COMMAND_END)
+DEFINE_CONSTRAINTS_BEGIN = "%s %s Begin %s" % (COMMAND_START, Command.DEFINE_CONSTRAINTS, COMMAND_END)
 ENDDEFINE_CONSTRAINTS_ = "%s %s End %s" % (COMMAND_START, Command.DEFINE_CONSTRAINTS, COMMAND_END)
 SET_VERSION = "%s %s %s %s"   \
     % (COMMAND_START, Command.SET_VERSION, DUMMY_VERSION, COMMAND_END)
@@ -22,7 +22,7 @@ SET_VERSION = "%s %s %s %s"   \
 class TestCommand(unittest.TestCase):
 
   def setUp(self):
-    self.command = Command(DEFINE_VARIABLES_START)
+    self.command = Command(DEFINE_VARIABLES_BEGIN)
 
   def _testConstructor(self, command_line, command_verb, arguments):
     """
@@ -43,9 +43,9 @@ class TestCommand(unittest.TestCase):
   def testConstructor(self):
     if IGNORE_TEST:
       return
-    self.command = Command(DEFINE_VARIABLES_START)
-    self._testConstructor(DEFINE_VARIABLES_START, Command.DEFINE_VARIABLES, [])
-    self.assertTrue(self.command.isStart())
+    self.command = Command(DEFINE_VARIABLES_BEGIN)
+    self._testConstructor(DEFINE_VARIABLES_BEGIN, Command.DEFINE_VARIABLES, [])
+    self.assertTrue(self.command.isBegin())
     self.assertFalse(self.command.isEnd())
     self.command = Command(DEFINE_VARIABLES_END)
     self._testConstructor(DEFINE_VARIABLES_END, Command.DEFINE_VARIABLES, [])
@@ -56,13 +56,13 @@ class TestCommand(unittest.TestCase):
   def testIsDefineConstraints(self):
     if IGNORE_TEST:
       return
-    self.command = Command(DEFINE_CONSTRAINTS_START)
+    self.command = Command(DEFINE_CONSTRAINTS_BEGIN)
     self.assertTrue(self.command.isDefineConstraints())
 
   def testIsDefineVariables(self):
     if IGNORE_TEST:
       return
-    self.command = Command(DEFINE_VARIABLES_START)
+    self.command = Command(DEFINE_VARIABLES_BEGIN)
     self.assertTrue(self.command.isDefineVariables())
 
   def testIsSetVersion(self):
@@ -71,11 +71,11 @@ class TestCommand(unittest.TestCase):
     self.command = Command(SET_VERSION)
     self.assertTrue(self.command.isSetVersion())
 
-  def testIsStart(self):
+  def testIsBegin(self):
     if IGNORE_TEST:
       return
-    self.command = Command(DEFINE_VARIABLES_START)
-    self.assertTrue(self.command.isStart())
+    self.command = Command(DEFINE_VARIABLES_BEGIN)
+    self.assertTrue(self.command.isBegin())
 
   def testIsEnd(self):
     if IGNORE_TEST:
@@ -86,8 +86,8 @@ class TestCommand(unittest.TestCase):
   def testStr(self):
     if IGNORE_TEST:
       return
-    self.command = Command(DEFINE_VARIABLES_START)
-    self.assertEqual(str(self.command), DEFINE_VARIABLES_START)
+    self.command = Command(DEFINE_VARIABLES_BEGIN)
+    self.assertEqual(str(self.command), DEFINE_VARIABLES_BEGIN)
 
   def testInvalidCommandLine(self):
     if IGNORE_TEST:

@@ -27,7 +27,7 @@ class Command(object):
     :param str command_line: line with the command
     """
     self._command_line = command_line
-    self._start = False
+    self._begin = False
     self._end = False
     self._arguments = []  # List of arguments following the command
     self._tokens = []
@@ -63,7 +63,7 @@ class Command(object):
 
   def _parsePairedCommands(self, command_verb, num_args=0):
     """
-    Parses commands that are paired with Start and End
+    Parses commands that are paired with Begin and End
     :param str command_verb:
     :param int num_args: number of arguments in command
     """
@@ -73,8 +73,8 @@ class Command(object):
       if len(self._tokens) < 2:
         raise ValueError("Exactly qualifier is required for %s"
             % self._tokens[0])
-      if self._tokens[1] == "Start":
-        self._start = True
+      if self._tokens[1] == "Begin":
+        self._begin = True
       elif self._tokens[1] == "End":
         self._end = True
       else:
@@ -89,7 +89,7 @@ class Command(object):
 
   def _parseUnpairedCommands(self, command_verb, num_args):
     """
-    Parses commands that are paired with Start and End
+    Parses commands that are paired with Begin and End
     :param str command_verb:
     :param int num_args: number of arguments in command
     """
@@ -128,8 +128,8 @@ class Command(object):
     cls = Command
     return self._command_verb == cls.DEFINE_CONSTRAINTS
 
-  def isStart(self):
-    return self._start
+  def isBegin(self):
+    return self._begin
 
   def isEnd(self):
     return self._end
