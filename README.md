@@ -70,7 +70,7 @@ J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32*{L}T2{p}R
 J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33*{L}T3{p}R
 </pre>
 
-One possible extension is to permit having a python expression inside a template instance (within `{` and `}`). This feature would eliminate one of the templated model lines in the above model by using {m+1} as a template instance.
+One possible extension is to permit having a python expression inside a template instance (within `{` and `}`). This feature would eliminate one of the templated model lines in the above model by using `{m+1}` as a template instance.
 
 The repository is organized as follows:
 
