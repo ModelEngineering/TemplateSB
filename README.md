@@ -21,9 +21,9 @@ Note that the reactions are independent of phosphorylation and ligand binding in
 With TemplateSB, the complete set of 12 reactions can be expressed in a more compact way. 
 Templates provide a way to describe model elements using expressions.
 A template variable or expression is surrounded by curly braces (`{`, `}`).
-Consider the template variable `{L}`.
+Consider the template variable `L`.
 Further, by default this variable has two expansions: `L` and "".
-The template variable `{p}` is handled in the same way.
+The template variable `p` is handled in the same way.
 Thus, the above four reactions can be expressed as a single templated reaction:
 
 <pre>
@@ -70,7 +70,7 @@ J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32*{L}T2{p}R
 J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33*{L}T3{p}R
 </pre>
 
-Here's an example using template variable expressions.
+Here's an example using a template variable expression to describe an increase in methylation level.
 
 <pre>
 {{ DefineVariables Begin }}
