@@ -70,6 +70,29 @@ J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32*{L}T2{p}R
 J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33*{L}T3{p}R
 </pre>
 
+Here's an example using template variable expressions.
+
+<pre>
+{{ DefineVariables Begin }}
+MIN_ME = 2  # Minimum methylation
+MAX_ME = 4  # Maximum methylation
+api.addDefinitions({
+                    'p': ['p', ''],  # Phosphorylation
+                    'me': [2, 3],  # Increase methylation
+                  })
+{{ DefineVariables End }}
+J1_{me}{p}R: T{me}{p}R -> T{me+1}{p} + R; k1c*T{me}{p}R
+</pre>
+
+TemplateSB expands the singl templated reaction to:
+
+<pre>
+J1_2pR: T2pR -> T3p + R; k1c*T2pR
+J1_3pR: T3pR -> T4p + R; k1c*T3pR
+J1_2R: T2R -> T3 + R; k1c*T2R
+J1_3R: T3R -> T4 + R; k1c*T3R
+</pre>
+
 One possible extension is to permit having a python expression inside a template instance (within `{` and `}`). This feature would eliminate one of the templated model lines in the above model by using `{m+1}` as a template instance.
 
 The repository is organized as follows:
