@@ -74,8 +74,6 @@ Here's an example using template variable expressions.
 
 <pre>
 {{ DefineVariables Begin }}
-MIN_ME = 2  # Minimum methylation
-MAX_ME = 4  # Maximum methylation
 api.addDefinitions({
                     'p': ['p', ''],  # Phosphorylation
                     'me': [2, 3],  # Increase methylation
