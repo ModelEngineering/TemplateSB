@@ -1,18 +1,7 @@
 / Created by libAntimony v2.8.1
 model *Bray1995_chemotaxis_receptorlinkedcomplex()
-{{ DefineVariables Start }}
-import collections
-"""
-rn is the reaction number
-m1, m2, m3 are molecules in the reaction
-k1, k2 are kinetics constants
-"""
-CF = collections.namedtuple('CF', 'nm m1 m2')  # Complex formation
-CD = collections.namedtuple('CD', 'nm m1 m2')  # Complex disassociation
-MT = collections.namedtuple('MT', 'nm m1 m2 m3')  # Moiety transfer
-MA = collections.namedtuple('MA', 'nm m1 m2')  # Moiety addition
-MR = collections.namedtuple('MR', 'nm m1 m2')  # Moiety removal
-BMR = collections.namedtuple('BMR', 'nm m1 m2 m3')  # Biomolecular moiety removal
+{{ DefineVariables Begin }}
+from reaction_definitions import *
 {{ DefineVariables End }}
 
   // Compartments and Species:
@@ -41,25 +30,6 @@ BMR = collections.namedtuple('BMR', 'nm m1 m2 m3')  # Biomolecular moiety remova
 //  complex_r12: TTWAA -> TTAA + W; cell*(complex_r12_k1*TTWAA - complex_r12_k2*TTAA*W);
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-// Complex disassociation reactions
-{{ DefineVariables Start }}
-cd_ definitions = {
-                   CD(1,  'TT',    'W'), 
-                   CD(2,  'W',     'AA'), 
-                   CD(3,  'TT',    'WAA'), 
-                   CD(4,  'TTW',   'WAA'), 
-                   CD(5,  'TTWW',  'AA'), 
-                   CD(6,  'TT',    'WWAA'), 
-                   CD(7,  'TT',    'AA'), 
-                   CD(8,  'TTW',   'AA'), 
-                   CD(9,  'TTWAA', 'W'), 
-                   CD(10, 'TTW',   'W'), 
-                   CD(11, 'W',     'WAA'), 
-                   CD(12, 'TTAA',  'W'), 
-                  }
-api.addDefinitions({'cd': cd_definitions})
-{{ DefineVariables End }}
-
 complex_r{cd.nm}: {cd.m1}{cd.m2} -> {cd.m1} + {cd.m2}; cell*(complex_r{cd.nm}_k1*{cd.m1}{cd.m2} - complex_r{cd.nm}_k2*{cd.m1}*{cd.m2};
 
 
@@ -75,18 +45,6 @@ complex_r{cd.nm}: {cd.m1}{cd.m2} -> {cd.m1} + {cd.m2}; cell*(complex_r{cd.nm}_k1
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 // Moiety additions for phosphorylation
-{{ DefineVariables Start }}
-ma_ definitions = {
-                   MA(1, 'TTWWAA', 'p'), 
-                   MA(2, 'AA',     'p'), 
-                   MA(3, 'WAA',    'p'), 
-                   MA(4, 'WWAA',   'p'), 
-                   MA(5, 'TTAA',   'p'), 
-                   MA(6, 'TTWAA',  'p'), 
-                   MA(7, 'Y',      'p'), 
-                  }
-api.addDefinitions({'ma': ma_definitions})
-{{ DefineVariables End }}
 
 phosphorylation_r{ma.nm}: {ma.m1} => {ma.m1}{ma.m2}; cell*phosphorylation_{ma.nm}_k1*{ma.m1};
 
@@ -98,17 +56,6 @@ phosphorylation_r{ma.nm}: {ma.m1} => {ma.m1}{ma.m2}; cell*phosphorylation_{ma.nm
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 // Moiety removal for dephosphorylation
-{{ DefineVariables Start }}
-mr_ definitions = {
-                   MR(8,  'Y', 'p'), 
-                   MR(10, 'B', 'p'), 
-                  }
-bmr_ definitions = {
-                    BMR(9,  'Y', 'p', 'Z'), 
-                   }
-api.addDefinitions({'mr': mr_definitions})
-api.addDefinitions({'bmr': bmr_definitions})
-{{ DefineVariables End }}
 
 phosphorylation_r{mr.nm}: {mr.m1}{mr.m2} => {mr.m1}; cell*phosphorylation_{mr.nm}_k1*{mr.m1}{mr.m2};
 phosphorylation_r{bmr.nm}: {bmr.m1}{bmr.m2} + {bmr.m3} => {mr.m1} + {bmr.m3}; cell*phosphorylation_{bmr.nm}_k1*{bmr.m1}{bmr.m2}*{bmr.m3};
@@ -132,19 +79,6 @@ phosphorylation_r{bmr.nm}: {bmr.m1}{bmr.m2} + {bmr.m3} => {mr.m1} + {bmr.m3}; ce
 // Moiety transfer for phosphotransfer
 // This example illustrates how further simplifications can be made by using
 // Python programming capabilities.
-{{ DefineVariables Start }}
-tuples = {
-          (1, 'AA',), 
-          (2, 'WAA'), 
-          (3, 'WWAA'),
-          (4, 'TTAA'),
-          (5, 'TTWAA'),
-          (6, 'TTWWAA')
-         }
-mt_definitions = [MT(t[0], 'B', t[1], 'p') for t in tuples]
-mt_definitions.extend([MT(t[0] + 6, 'Y', t[1], 'p') for t in tuples])
-api.addDefinitions({'mt': mt_definitions})
-{{ DefineVariables End }}
 
 phosphotransfer_r{mt.nm}: {mt.m1} + {mr.m2}{mr.m3} => {mr.m1}{mr.m3} + {mr.m2}; cell*phosphorylation_{mt.nm}_k1*{mr.m1}{mr.m3};
 
