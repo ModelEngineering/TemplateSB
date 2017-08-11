@@ -112,8 +112,8 @@ class TemplateProcessor(object):
             program = '\n'.join(self._define_variables_statements)
             self._executor.doScript(program)
           except Exception as err:
-            msg = "***Error %s executing on line %d:\n%s"  \
-                % (err.msg, err.lineno, program)
+            msg = "***Error %s executing in : \n%s"  \
+                % (str(err), program)
             self._errorMsg(msg)
           self._command = None
       # SetVersion command
