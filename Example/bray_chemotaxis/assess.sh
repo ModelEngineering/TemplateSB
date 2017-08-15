@@ -7,6 +7,7 @@ function filter {
     | grep -v "^ *#"              \
     | grep -v "^ *$"              \
     | sed 's/^ *//'               \
+    | sort                        \
     > /tmp/${this_file}
 }  
 

@@ -168,57 +168,81 @@ phosphotransfer_r{mt.nm}: {mt.m1} + {mt.m2}{mt.m3} => {mt.m1}{mt.m3} + {mt.m2}; 
   cell = 1.41;
 
 
+{{ DefineVariables Begin }}
+KC = collections.namedtuple('KC', 'nm k1 k2')  # Complex
+KPP = collections.namedtuple('KPP', 'nm k1 k2') # Phosphorylation
+KPT = collections.namedtuple('KPT', 'nm k1 k2') # Phosphotransfer
+kc_definitions = {KC(1, 0.00365, 1000000),
+                  KC(2, 0.00894, 1000000),
+                  KC(3, 297, 1000000),
+                  KC(4, 0.64, 1000000),
+                  KC(5, 0.112, 1000000),
+                  KC(6, 0.0229, 1000000),
+                  KC(7, 39.3, 1000000),
+                  KC(8, 727, 1000000),
+                  KC(9, 7.87e-06, 1000000),
+                  KC(10, 0.0511, 1000000),
+                  KC(11, 0.102, 1000000),
+                  KC(12, 0.0676, 1000000),
+                 }
+api.addDefinitions({'kc': kc_definitions})
+{{ DefineVariables End }}
+//  complex_r1_k1 = 0.00365;
+//  complex_r1_k1 has persec;
+//  complex_r1_k2 = 1000000;
+//  complex_r1_k2 has perMpersec;
+//  complex_r2_k1 = 0.00894;
+//  complex_r2_k1 has persec;
+//  complex_r2_k2 = 1000000;
+//  complex_r2_k2 has perMpersec;
+//  complex_r3_k1 = 297;
+//  complex_r3_k1 has persec;
+//  complex_r3_k2 = 1000000;
+//  complex_r3_k2 has perMpersec;
+//  complex_r4_k1 = 0.64;
+//  complex_r4_k1 has persec;
+//  complex_r4_k2 = 1000000;
+//  complex_r4_k2 has perMpersec;
+//  complex_r5_k1 = 0.112;
+//  complex_r5_k1 has persec;
+//  complex_r5_k2 = 1000000;
+//  complex_r5_k2 has perMpersec;
+//  complex_r6_k1 = 0.0229;
+//  complex_r6_k1 has persec;
+//  complex_r6_k2 = 1000000;
+//  complex_r6_k2 has perMpersec;
+//  complex_r7_k1 = 39.3;
+//  complex_r7_k1 has persec;
+//  complex_r7_k2 = 1000000;
+//  complex_r7_k2 has perMpersec;
+//  complex_r8_k1 = 727;
+//  complex_r8_k1 has persec;
+//  complex_r8_k2 = 1000000;
+//  complex_r8_k2 has perMpersec;
+//  complex_r9_k1 = 7.87e-06;
+//  complex_r9_k1 has persec;
+//  complex_r9_k2 = 1000000;
+//  complex_r9_k2 has perMpersec;
+//  complex_r10_k1 = 0.0511;
+//  complex_r10_k1 has persec;
+//  complex_r10_k2 = 1000000;
+//  complex_r10_k2 has perMpersec;
+//  complex_r11_k1 = 0.102;
+//  complex_r11_k1 has persec;
+//  complex_r11_k2 = 1000000;
+//  complex_r11_k2 has perMpersec;
+//  complex_r12_k1 = 0.0676;
+//  complex_r12_k1 has persec;
+//  complex_r12_k2 = 1000000;
+//  complex_r12_k2 has perMpersec;
+
   // Variable initializations:
   Hill = 4;
   Bias has dimensionless;
-  complex_r1_k1 = 0.00365;
-  complex_r1_k1 has persec;
-  complex_r1_k2 = 1000000;
-  complex_r1_k2 has perMpersec;
-  complex_r2_k1 = 0.00894;
-  complex_r2_k1 has persec;
-  complex_r2_k2 = 1000000;
-  complex_r2_k2 has perMpersec;
-  complex_r3_k1 = 297;
-  complex_r3_k1 has persec;
-  complex_r3_k2 = 1000000;
-  complex_r3_k2 has perMpersec;
-  complex_r4_k1 = 0.64;
-  complex_r4_k1 has persec;
-  complex_r4_k2 = 1000000;
-  complex_r4_k2 has perMpersec;
-  complex_r5_k1 = 0.112;
-  complex_r5_k1 has persec;
-  complex_r5_k2 = 1000000;
-  complex_r5_k2 has perMpersec;
-  complex_r6_k1 = 0.0229;
-  complex_r6_k1 has persec;
-  complex_r6_k2 = 1000000;
-  complex_r6_k2 has perMpersec;
-  complex_r7_k1 = 39.3;
-  complex_r7_k1 has persec;
-  complex_r7_k2 = 1000000;
-  complex_r7_k2 has perMpersec;
-  complex_r8_k1 = 727;
-  complex_r8_k1 has persec;
-  complex_r8_k2 = 1000000;
-  complex_r8_k2 has perMpersec;
-  complex_r9_k1 = 7.87e-06;
-  complex_r9_k1 has persec;
-  complex_r9_k2 = 1000000;
-  complex_r9_k2 has perMpersec;
-  complex_r10_k1 = 0.0511;
-  complex_r10_k1 has persec;
-  complex_r10_k2 = 1000000;
-  complex_r10_k2 has perMpersec;
-  complex_r11_k1 = 0.102;
-  complex_r11_k1 has persec;
-  complex_r11_k2 = 1000000;
-  complex_r11_k2 has perMpersec;
-  complex_r12_k1 = 0.0676;
-  complex_r12_k1 has persec;
-  complex_r12_k2 = 1000000;
-  complex_r12_k2 has perMpersec;
+  complex_r{kc.nm}_k1 = {kc.k1};
+  complex_r{kc.nm}_k1 has persec;
+  complex_r{kc.nm}_k2 = {kc.k2};
+  complex_r{kc.nm}_k2 has perMpersec;
   phosphorylation_r1_k1 = 15.5;
   phosphorylation_r1_k1 has persec;
   phosphorylation_r2_k1 = 0.0227;
