@@ -4,29 +4,30 @@ model *Bray1995_chemotaxis_receptorlinkedcomplex()
 import collections
 """
 rn is the reaction number
-m1, m2, m3 are molecules in the reaction
+m1, m2, m3, mf are molecules in the reaction
 k1, k2 are kinetics constants
 """
-CT = collections.namedtuple('CT', 'nm m1 m2')  # Complex transformation
-CTF = collections.namedtuple('CTF', 'nm m1 m2 mf')  # Complex transformation with explicit complex name
+CT = collections.namedtuple('CT', 'nm m1 m2 mf')  # Complex transformation
 MT = collections.namedtuple('MT', 'nm m1 m2 m3')  # Moiety transfer
 MA = collections.namedtuple('MA', 'nm m1 m2')  # Moiety addition
 MR = collections.namedtuple('MR', 'nm m1 m2')  # Moiety removal
 BMR = collections.namedtuple('BMR', 'nm m1 m2 m3')  # Biomolecular moiety removal
-ct_definitions = [ 
-                   CT(1,  'TT',    'W'),   
-                   CT(2,  'W',     'AA'),   
-                   CT(3,  'TT',    'WAA'),   
-                   CT(4,  'TTW',   'WAA'),   
-                   CT(5,  'TTWW',  'AA'),   
-                   CT(6,  'TT',    'WWAA'),   
-                   CT(7,  'TT',    'AA'),   
-                   CT(8,  'TTW',   'AA'),   
-                   CTF(9,  'TTWAA', 'W', 'TTWWAA'),   
-                   CT(10, 'TTW',   'W'),   
-                   CT(11, 'W',     'WAA'),   
-                   CTF(12, 'TTAA',  'W', 'TTWAA')
-                  ]
+ct_raw = [ 
+           (1,  'TT',    'W'),   
+           (2,  'W',     'AA'),   
+           (3,  'TT',    'WAA'),   
+           (4,  'TTW',   'WAA'),   
+           (5,  'TTWW',  'AA'),   
+           (6,  'TT',    'WWAA'),   
+           (7,  'TT',    'AA'),   
+           (8,  'TTW',   'AA'),   
+           (9,  'TTWAA', 'W', 'TTWWAA'),   
+           (10, 'TTW',   'W'),   
+           (11, 'W',     'WAA'),   
+           (12, 'TTAA',  'W', 'TTWAA')
+         ]
+ct_definitions = [CT(x[0], x[1], x[2], x[1] + x[2]) if len(x) == 3 
+                      else CT(x[0], x[1], x[2], x[3]) for x in ct_raw]
 mr_definitions = [
                   MR(8,  'Y', 'p'), 
                   MR(10, 'B', 'p'), 
@@ -88,8 +89,7 @@ api.addDefinitions({
 //  complex_r12: TTWAA -> TTAA + W; cell*(complex_r12_k1*TTWAA - complex_r12_k2*TTAA*W);
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-complex_r{ct.nm}: {ct.mf if 'mf' in dir(ct) else ct.m1 + ct.m2} -> {ct.m1} + {ct.m2}; cell*(complex_r{ct.nm}_k1*{ct.mf if 'mf' in dir(ct) else ct.m1 + ct.m2} - complex_r{ct.nm}_k2*{ct.m1}*{ct.m2});
-
+complex_r{ct.nm}: {ct.mf} -> {ct.m1} + {ct.m2}; cell*(complex_r{ct.nm}_k1*{ct.mf} - complex_r{ct.nm}_k2*{ct.m1}*{ct.m2});
 
 
 //VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV

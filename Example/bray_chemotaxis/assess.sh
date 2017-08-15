@@ -14,7 +14,7 @@ function filter {
 original=`ls BIOM*.mdl`
 processed_name="bray_model"
 processed=`ls ${processed_name}.mdl`
-python ../../run.py < ${processed_name}.tmpl > ${processed}
+bash run.sh
 filter $original
 filter $processed
 diff /tmp/${original} /tmp/${processed} > /tmp/assess.out
