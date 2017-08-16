@@ -71,12 +71,6 @@ class TestTemplateProcessor(unittest.TestCase):
       return
     self.assertIsNotNone(self.processor._extractor)
 
-  def testErrorMsg(self):
-    if IGNORE_TEST:
-      return
-    with self.assertRaises(ValueError):
-      self.processor._errorMsg("")
-
   def _testExpand(self, template, variable):
     """
     :param str template: template to expand

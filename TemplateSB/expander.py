@@ -1,6 +1,7 @@
 '''Class that does string expansion using template expressions.'''
 
-from constants import EXPRESSION_START, EXPRESSION_END
+from constants import EXPRESSION_START, EXPRESSION_END,  \
+    WARNING_ASSIGNMENTS
 import re
 
 
@@ -13,14 +14,16 @@ class Expander(object):
   the values of the template variables.
   """
 
-  def __init__(self, executor,
+  def __init__(self, executor, message,
        left_delim=EXPRESSION_START, right_delim=EXPRESSION_END):
     """
     :param Executor executor:
+    :param StatusMessage message:
     :param char left_delim: left delimiter for a template expression
     :param char right_delim: right delim for a template expression
     """
     self._executor = executor
+    self._message = message
     self._left_delim = left_delim
     self._right_delim = right_delim
 
@@ -82,6 +85,9 @@ class Expander(object):
     # Create the combinations of assignments of values to variables
     definitions = self._executor.getDefinitions()
     assignments = cls.makeSubstitutionList(definitions)
+    if len(assignments) > WARNING_ASSIGNMENTS:
+      msg = "Number of assignments is %d!" % len(assignments)
+      self._message.warning(msg)
     expressions = self.getTemplateExpressions(segment)
     for assignment in assignments:
       self._executor.addNamespace(assignment)

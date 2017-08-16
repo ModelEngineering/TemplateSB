@@ -27,6 +27,7 @@ from constants import EXPRESSION_START, EXPRESSION_END,  \
   VERSION, SPLIT_STG, COMMENT_STG,  \
   CONTINUED_STG, LINE_TRAN, LINE_COMMAND, LINE_SUBS, LINE_NONE
 from line_extractor import LineExtractor
+from status_message import StatusMessage
 import fileinput
 import sys
 
@@ -42,11 +43,11 @@ class TemplateProcessor(object):
         and template escape statements to execute
     """
     self._extractor = LineExtractor(template_string)
+    self._message = StatusMessage(self._extractor)
     self._executor = Executor()
-    self._expander = Expander(self._executor)
+    self._expander = Expander(self._executor, self._message)
     self._command = None  # Command being processed
     self._define_variable_statements = []
-    self._define_constraints_statements = []
 
   @classmethod
   def processFile(cls, inpath, outpath):
@@ -63,16 +64,6 @@ class TemplateProcessor(object):
     expansion = processor.do()
     with open(outpath, 'w') as outfile:
       outfile.write(expansion)
-
-  def _errorMsg(self, msg):
-    """
-    :param str msg:
-    :raises ValueError:
-    """
-    error = "on line %d.\n'%s'\nError message: %s"  \
-        % (self._extractor.getCurrentSourceLineNumber(), 
-           self._extractor.getCurrentLine(), msg)
-    raise ValueError(error)
 
   @staticmethod
   def _makeComment(line):
@@ -100,7 +91,7 @@ class TemplateProcessor(object):
           if new_command.isEnd():
             pass
           else:
-            self._errorMsg("Cannot nest commands")
+            self._message.error("Cannot nest commands")
       # Valid placement for a command.
       self._command = Command(line)
       # DefineVariables Command
@@ -114,26 +105,24 @@ class TemplateProcessor(object):
           except Exception as err:
             msg = "***Error %s executing in : \n%s"  \
                 % (str(err), program)
-            self._errorMsg(msg)
+            self._message.error(msg)
           self._command = None
       # SetVersion command
       elif self._command.isSetVersion():
         version = self._command.getArguments()[0]
         if float(version) > VERSION:
-          self._errorMsg("Unsupported version %s" % version)
+          self._message.error("Unsupported version %s" % version)
         self._command = None
       # Other commands
       else:
-        self._errorMsg("Unknown command")
+        self._message.error("Unknown command")
     # Process statements occurring within paired commands
     elif self._command is not None:
       is_processed = True
       if self._command.isDefineVariables() and self._command.isBegin():
         self._define_variables_statements.append(line)
-      elif self._command.isDefineConstraints() and self._command.isBegin():
-        self._define_constraints_statements.append(line)
       else:
-        self._errorMsg("Invalid paired command.")
+        self._message.error("Invalid paired command.")
     return is_processed
 
   def do(self):
@@ -171,7 +160,7 @@ class TemplateProcessor(object):
             substitutions = self._expander.do(line)
           except Exception as err:
             msg = "Runtime error in expression"
-            self._errorMsg(msg)
+            self._message.error(msg)
           if len(substitutions) > 1:
             expansion.append(cls._makeComment(line))
           expansion.extend(substitutions)
@@ -181,5 +170,5 @@ class TemplateProcessor(object):
       line, line_type = self._extractor.do()
     if self._command is not None:
       msg = "Still processing command %s at EOF" % str(self._command)
-      self._errorMsg(msg)
+      self._message.error(msg)
     return "\n".join(expansion)

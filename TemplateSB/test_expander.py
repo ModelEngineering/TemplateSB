@@ -4,6 +4,8 @@ Tests for Expander
 from expander import Expander
 from expander import EXPRESSION_START, EXPRESSION_END
 from executor import Executor
+from line_extractor import LineExtractor
+from status_message import StatusMessage
 
 import unittest
 import numpy as np
@@ -23,7 +25,9 @@ SUBSTITUTION2 = "J{a}1: S{a}1 -> S{a}2; k1*S{a}1"
 class TestSubtituter(unittest.TestCase):
 
   def setUp(self):
-    self.expander = Expander(Executor())
+    self.extractor = LineExtractor("")
+    self.message = StatusMessage(self.extractor)
+    self.expander = Expander(Executor(), self.message)
 
   def testMakeSubtitutionList(self):
     if IGNORE_TEST:
@@ -79,7 +83,7 @@ class TestSubtituter(unittest.TestCase):
       return
     executor = Executor()
     executor.setDefinitions(DEFINITIONS)
-    expander = Expander(executor)
+    expander = Expander(executor, self.message)
     result = expander.do(SUBSTITUTION1)
     self.assertEqual(result[0], SUBSTITUTION1)
     result = expander.do(SUBSTITUTION2)
@@ -90,7 +94,7 @@ class TestSubtituter(unittest.TestCase):
     if IGNORE_TEST:
       return
     executor = Executor()
-    expander = Expander(executor)
+    expander = Expander(executor, self.message)
     result = expander.do(SUBSTITUTION1)
     self.assertEqual(result[0], SUBSTITUTION1)
 
@@ -101,7 +105,7 @@ class TestSubtituter(unittest.TestCase):
     var = 'n'
     definitions = {var: [1, 2, 3]}
     executor.setDefinitions(definitions)
-    expander = Expander(executor)
+    expander = Expander(executor, self.message)
     template = "T{%s} + A -> T{%s+1}" % (var, var)
     expansion = expander.do(template)
     self.assertEqual(len(expansion), len(definitions[var]))
