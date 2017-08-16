@@ -86,7 +86,7 @@ class Expander(object):
     definitions = self._executor.getDefinitions()
     assignments = cls.makeSubstitutionList(definitions)
     if len(assignments) > WARNING_ASSIGNMENTS:
-      msg = "Number of assignments is %d!" % len(assignments)
+      msg = "Very large number of assignments: %d!" % len(assignments)
       self._message.warning(msg)
     expressions = self.getTemplateExpressions(segment)
     for assignment in assignments:
