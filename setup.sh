@@ -4,3 +4,4 @@
 # run this script.
 conda install -c sys-bio tellurium
 conda install -c SBMLTeam python-libsbml
+pip install simpleyaml
