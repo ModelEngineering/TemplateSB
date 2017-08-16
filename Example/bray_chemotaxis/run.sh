@@ -1,1 +1,1 @@
-python ../../run.py < bray_model.tmpl >bran_model.mdl
+python ../../run.py < bray_model.tmpl >bray_model.mdl

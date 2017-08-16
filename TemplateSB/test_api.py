@@ -22,14 +22,24 @@ class TestApi(unittest.TestCase):
   def testConstructor(self):
     if IGNORE_TEST:
       return
-    self.assertEqual(len(self.api._constraints), 0)
     self.assertEqual(len(self.api._definitions.items()), 0)
+
+  def _testAddDefinitions(self, definitions):
+    self.api.addDefinitions(definitions)
+    self.assertEqual(self.api._definitions.items(), definitions.items())
 
   def testAddDefinitions(self):
     if IGNORE_TEST:
       return
-    self.api.addDefinitions(DEFINITIONS)
-    self.assertEqual(self.api._definitions.items(), DEFINITIONS.items())
+    self._testAddDefinitions(DEFINITIONS)
+
+  def testRemoveDefinitions(self):
+    if IGNORE_TEST:
+      return
+    self._testAddDefinitions(DEFINITIONS)
+    self.api.removeDefinitions(DEFINITIONS.keys())
+    for name in DEFINITIONS.keys():
+      self.assertFalse(name in self.api._definitions.keys())
 
   def testGetDefinitions(self):
     self.api.addDefinitions({NAME: VALUES})
