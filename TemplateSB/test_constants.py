@@ -2,11 +2,14 @@
 Tests for constants
 """
 import constants
+import os
 import unittest
 
 
 IGNORE_TEST = False
 TEST_FILE = "testdata_constants.yaml"
+PARENT_DIR = os.path.dirname(os.path.abspath(__file__))
+TEST_FILE = os.path.join(PARENT_DIR, "testdata_constants.yaml")
 
 #############################
 # Tests

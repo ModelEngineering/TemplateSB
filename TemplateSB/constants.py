@@ -1,5 +1,6 @@
 '''Constants used in TemplateSB.'''
 
+import os
 import yaml
 
 
@@ -14,7 +15,8 @@ EXPRESSION_END = None
 WARNING_ASSIGNMENTS = 10000
 
 # The following constants are internal
-CONFIG_FILE_PATH = "../config.yaml"
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_FILE_PATH = os.path.join(PARENT_DIR, "config.yaml")
 LINE_COMMAND = 2  # Command line
 LINE_NONE = -1  # Command line
 LINE_SUBS = 3  # Line to be processed for substitutions

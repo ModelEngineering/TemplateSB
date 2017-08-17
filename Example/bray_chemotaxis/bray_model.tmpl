@@ -77,24 +77,12 @@ complex_raw = [(1, 0.00365),
                (11, 0.102),
                (12, 0.0676),
               ]
-# Constant k1
-kc1_definitions = [KC('complex', x[0], x[1], 'persec') for x in complex_raw]
-# Constant k2
-kc2_definitions = [KC('complex', x[0], 1000000, 'perMpersec') for x in complex_raw]
-phosphorylation_raw = [(1, 15.5),
-                       (2, 0.0227),
-                       (3, 0.0227),
-                       (4, 0.0227),
-                       (5, 0.0227),
-                       (6, 0.0227),
-                       (7, 0.00124),
-                       (8, 0.037),
-                       (10, 0.35),
-                      ]
-kc1_definitions.extend([KC('phosphorylation', x[0], x[1], 'persec') for x in phosphorylation_raw])
-kc1_definitions.append(KC('phosphorylation', 9, 500000, 'perMpersec'))
-phosphotransfer_raw = [(n, 6000000) if n < 7 else (n, 3000000) for n in range(1, 13)]
-kc1_definitions.extend([KC('phosphotransfer', x[0], x[1], 'perMpersec') for x in phosphotransfer_raw])
+api.addDefinitions({'mt': mt_definitions,
+                    'mr': mr_definitions,
+                    'bmr': bmr_definitions,
+                    'ma': ma_definitions,
+                    'ct': ct_definitions,
+                   })
 {{ DefineVariables End }}
 
   // Compartments and Species:
@@ -202,8 +190,6 @@ phosphotransfer_r{mt.nm}: {mt.m1} + {mt.m2}{mt.m3} => {mt.m1}{mt.m3} + {mt.m2}; 
   cell = 1.41;
 
 
-{{ DefineVariables Begin }}
-{{ DefineVariables End }}
 //  phosphorylation_r1_k1 = 15.5;
 //  phosphorylation_r1_k1 has persec;
 //  phosphorylation_r2_k1 = 0.0227;
@@ -296,6 +282,32 @@ phosphotransfer_r{mt.nm}: {mt.m1} + {mt.m2}{mt.m3} => {mt.m1}{mt.m3} + {mt.m2}; 
 //  phosphotransfer_r11_k1 has perMpersec;
 //  phosphotransfer_r12_k1 = 30000000;
 //  phosphotransfer_r12_k1 has perMpersec;
+
+{{ DefineVariables Begin }}
+# Constant k1
+kc1_definitions = [KC('complex', x[0], x[1], 'persec') for x in complex_raw]
+# Constant k2
+kc2_definitions = [KC('complex', x[0], 1000000, 'perMpersec') for x in complex_raw]
+phosphorylation_raw = [(1, 15.5),
+                       (2, 0.0227),
+                       (3, 0.0227),
+                       (4, 0.0227),
+                       (5, 0.0227),
+                       (6, 0.0227),
+                       (7, 0.00124),
+                       (8, 0.037),
+                       (10, 0.35),
+                      ]
+kc1_definitions.extend([KC('phosphorylation', x[0], x[1], 'persec') for x in phosphorylation_raw])
+kc1_definitions.append(KC('phosphorylation', 9, 500000, 'perMpersec'))
+phosphotransfer_raw = [(n, 6000000) if n < 7 else (n, 30000000) for n in range(1, 13)]
+kc1_definitions.extend([KC('phosphotransfer', x[0], x[1], 'perMpersec') for x in phosphotransfer_raw])
+api.clearDefinitions()  # Clear the existing definitions to avoid computational complexity
+api.addDefinitions({
+                    'kc1': kc1_definitions,
+                    'kc2': kc2_definitions,
+                   })
+{{ DefineVariables End }}
 
   // Variable initializations:
   Hill = 4;

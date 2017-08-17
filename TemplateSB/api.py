@@ -23,6 +23,12 @@ class Api(object):
     for name in names:
       del self._definitions[name]
 
+  def clearDefinitions(self):
+    """
+    Removes all defintions
+    """
+    self._definitions = {}
+
   def getDefinitions(self):
     """
     :return list:
