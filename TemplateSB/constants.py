@@ -10,7 +10,6 @@ COMMENT_STG = None
 CONTINUED_STG = None
 EXPRESSION_START = None
 EXPRESSION_END = None
-SPLIT_STG = None
 # Number of definitions before a warning is generated
 WARNING_ASSIGNMENTS = 10000
 
@@ -23,29 +22,36 @@ LINE_TRAN = 1  # Transparent - nothing to process (comment line, no template var
 LINE_NONE = -1 # No more lines
 # Version of code
 VERSION = "1.2"
+# YAML keywords and their internal counterparts
+PAIRS = {"command_start": "COMMAND_START",
+         "command_end": "COMMAND_END",
+         "comment_character": "COMMENT_STG",
+         "continuation_string": "CONTINUED_STG",
+         "expression_start": "EXPRESSION_START",
+         "expression_end": "EXPRESSION_END",
+         "warn_assignments": "WARNING_ASSIGNMENTS",
+        }
+SPLIT_STG = '\n'
 
 
 def setConstantsFromConfig(path=CONFIG_FILE_PATH):
   fd = open(path, "r")
   lines = ''.join(fd.readlines())
   fd.close()
+  namespace = globals()
   config_dict = yaml.load(lines)
   for key, value in config_dict.items():
-    if key == "command_start":
-      COMMAND_START = value
-    elif key == "command_end":
-      COMMAND_END = value
-    elif key == "comment_character":
-      COMMENT_STG = value
-    elif key == "continuation_string":
-      CONTINUED_STG = value
-    elif key == "expression_start":
-      EXPRESSION_START = value
-    elif key == "expression_end":
-      EXPRESSION_END = value
-    elif key == "warn_assignments":
-      WARNING_ASSIGNMENTS = value
+    if key in PAIRS.keys():
+      namespace[PAIRS[key]] = value
     else:
       raise ValueError("Invalid configuration parameter: %s" % key)
+  # Check that all values have been assigned
+  for name in PAIRS.values():
+    if not name in namespace:
+    # FIND THE VALUE
+      raise ValueError("No configuration parameter: %s" % key)
 
-# NEED TO VERIFY ALL PARAMEERS SET
+def getGlobals():
+  return globals()
+
+setConstantsFromConfig()

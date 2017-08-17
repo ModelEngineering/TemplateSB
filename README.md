@@ -91,6 +91,8 @@ J1_2R: T2R -> T3 + R; k1c*T2R
 J1_3R: T3R -> T4 + R; k1c*T3R
 </pre>
 
+Since TemplateSB is intended to be applied to many source languages, various elements can be configured to adapt to different source inputs. This is described in `config.yaml`.
+
 One possible extension is to permit having a python expression inside a template instance (within `{` and `}`). This feature would eliminate one of the templated model lines in the above model by using `{m+1}` as a template instance.
 
 The repository is organized as follows:

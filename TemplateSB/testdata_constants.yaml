@@ -1,0 +1,16 @@
+# Configure constants used in TemplateSB 
+
+# String used to designate the start of a command
+command_start: '{{'
+# String used to designate the end of a command
+command_end: '}}'
+# Character indicating a comment line
+comment_character: '#'
+# Character at end of line indicating that the line continues
+continuation_string: '\'
+# String that indicates that start of an template variable expression
+expression_start: '{'
+# String that indicates that end of an template variable expression
+expression_end: '}'
+# Number of assignments that results in a warning message
+warn_assignments: -1

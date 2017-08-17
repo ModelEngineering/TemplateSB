@@ -59,13 +59,42 @@ tuples = [
          ]
 mt_definitions = [MT(t[0], 'B', t[1], 'p') for t in tuples]
 mt_definitions.extend([MT(t[0] + 6, 'Y', t[1], 'p') for t in tuples])
-api.addDefinitions({
-                    'ct': ct_definitions,
-                    'mr': mr_definitions,
-                    'bmr': bmr_definitions,
-                    'ma': ma_definitions,
-                    'mt': mt_definitions,
-                  })
+# ty - type of reaction
+# nm - reaction number
+# val - value of kinetics constant 1
+# unt - units of kinetics constant 1
+KC = collections.namedtuple('KC', 'ty nm val unt')
+complex_raw = [(1, 0.00365),
+               (2, 0.00894),
+               (3, 297),
+               (4, 0.64),
+               (5, 0.112),
+               (6, 0.0229),
+               (7, 39.3),
+               (8, 727),
+               (9, 7.87e-06),
+               (10, 0.0511),
+               (11, 0.102),
+               (12, 0.0676),
+              ]
+# Constant k1
+kc1_definitions = [KC('complex', x[0], x[1], 'persec') for x in complex_raw]
+# Constant k2
+kc2_definitions = [KC('complex', x[0], 1000000, 'perMpersec') for x in complex_raw]
+phosphorylation_raw = [(1, 15.5),
+                       (2, 0.0227),
+                       (3, 0.0227),
+                       (4, 0.0227),
+                       (5, 0.0227),
+                       (6, 0.0227),
+                       (7, 0.00124),
+                       (8, 0.037),
+                       (10, 0.35),
+                      ]
+kc1_definitions.extend([KC('phosphorylation', x[0], x[1], 'persec') for x in phosphorylation_raw])
+kc1_definitions.append(KC('phosphorylation', 9, 500000, 'perMpersec'))
+phosphotransfer_raw = [(n, 6000000) if n < 7 else (n, 3000000) for n in range(1, 13)]
+kc1_definitions.extend([KC('phosphotransfer', x[0], x[1], 'perMpersec') for x in phosphotransfer_raw])
 {{ DefineVariables End }}
 
   // Compartments and Species:
@@ -174,42 +203,6 @@ phosphotransfer_r{mt.nm}: {mt.m1} + {mt.m2}{mt.m3} => {mt.m1}{mt.m3} + {mt.m2}; 
 
 
 {{ DefineVariables Begin }}
-# ty - type of reaction
-# nm - reaction number
-# val - value of kinetics constant 1
-# unt - units of kinetics constant 1
-KC = collections.namedtuple('KC', 'ty nm val unt')
-complex_raw = [(1, 0.00365),
-               (2, 0.00894),
-               (3, 297),
-               (4, 0.64),
-               (5, 0.112),
-               (6, 0.0229),
-               (7, 39.3),
-               (8, 727),
-               (9, 7.87e-06),
-               (10, 0.0511),
-               (11, 0.102),
-               (12, 0.0676),
-              ]
-# Constant k1
-kc1_definitions = [KC('complex', x[0], x[1], 'persec') for x in complex_raw]
-# Constant k2
-kc2_definitions = [KC('complex', x[0], 1000000, 'perMpersec') for x in complex_raw]
-phosphorylation_raw = [(1, 15.5),
-                       (2, 0.0227),
-                       (3, 0.0227),
-                       (4, 0.0227),
-                       (5, 0.0227),
-                       (6, 0.0227),
-                       (7, 0.00124),
-                       (8, 0.037),
-                       (10, 0.35),
-                      ]
-kc1_definitions.extend([KC('phosphorylation', x[0], x[1], 'persec') for x in phosphorylation_raw])
-kc1_definitions.append(KC('phosphorylation', 9, 500000, 'perMpersec'))
-api.removeDefinitions(['ct', 'mr', 'bmr', 'ma', 'mt'])
-api.addDefinitions({'kc1': kc1_definitions, 'kc2': kc2_definitions})
 {{ DefineVariables End }}
 //  phosphorylation_r1_k1 = 15.5;
 //  phosphorylation_r1_k1 has persec;
@@ -279,6 +272,30 @@ api.addDefinitions({'kc1': kc1_definitions, 'kc2': kc2_definitions})
 //  complex_r12_k1 has persec;
 //  complex_r12_k2 = 1000000;
 //  complex_r12_k2 has perMpersec;
+//  phosphotransfer_r1_k1 = 6000000;
+//  phosphotransfer_r1_k1 has perMpersec;
+//  phosphotransfer_r2_k1 = 6000000;
+//  phosphotransfer_r2_k1 has perMpersec;
+//  phosphotransfer_r3_k1 = 6000000;
+//  phosphotransfer_r3_k1 has perMpersec;
+//  phosphotransfer_r4_k1 = 6000000;
+//  phosphotransfer_r4_k1 has perMpersec;
+//  phosphotransfer_r5_k1 = 6000000;
+//  phosphotransfer_r5_k1 has perMpersec;
+//  phosphotransfer_r6_k1 = 6000000;
+//  phosphotransfer_r6_k1 has perMpersec;
+//  phosphotransfer_r7_k1 = 30000000;
+//  phosphotransfer_r7_k1 has perMpersec;
+//  phosphotransfer_r8_k1 = 30000000;
+//  phosphotransfer_r8_k1 has perMpersec;
+//  phosphotransfer_r9_k1 = 30000000;
+//  phosphotransfer_r9_k1 has perMpersec;
+//  phosphotransfer_r10_k1 = 30000000;
+//  phosphotransfer_r10_k1 has perMpersec;
+//  phosphotransfer_r11_k1 = 30000000;
+//  phosphotransfer_r11_k1 has perMpersec;
+//  phosphotransfer_r12_k1 = 30000000;
+//  phosphotransfer_r12_k1 has perMpersec;
 
   // Variable initializations:
   Hill = 4;
@@ -287,30 +304,6 @@ api.addDefinitions({'kc1': kc1_definitions, 'kc2': kc2_definitions})
   {kc1.ty}_r{kc1.nm}_k1 has {kc1.unt};
   {kc2.ty}_r{kc2.nm}_k2 = {kc2.val};
   {kc2.ty}_r{kc2.nm}_k2 has {kc2.unt};
-  phosphotransfer_r1_k1 = 6000000;
-  phosphotransfer_r1_k1 has perMpersec;
-  phosphotransfer_r2_k1 = 6000000;
-  phosphotransfer_r2_k1 has perMpersec;
-  phosphotransfer_r3_k1 = 6000000;
-  phosphotransfer_r3_k1 has perMpersec;
-  phosphotransfer_r4_k1 = 6000000;
-  phosphotransfer_r4_k1 has perMpersec;
-  phosphotransfer_r5_k1 = 6000000;
-  phosphotransfer_r5_k1 has perMpersec;
-  phosphotransfer_r6_k1 = 6000000;
-  phosphotransfer_r6_k1 has perMpersec;
-  phosphotransfer_r7_k1 = 30000000;
-  phosphotransfer_r7_k1 has perMpersec;
-  phosphotransfer_r8_k1 = 30000000;
-  phosphotransfer_r8_k1 has perMpersec;
-  phosphotransfer_r9_k1 = 30000000;
-  phosphotransfer_r9_k1 has perMpersec;
-  phosphotransfer_r10_k1 = 30000000;
-  phosphotransfer_r10_k1 has perMpersec;
-  phosphotransfer_r11_k1 = 30000000;
-  phosphotransfer_r11_k1 has perMpersec;
-  phosphotransfer_r12_k1 = 30000000;
-  phosphotransfer_r12_k1 has perMpersec;
 
   // Other declarations:
   var Bias;
