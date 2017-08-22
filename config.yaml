@@ -14,3 +14,5 @@ expression_start: '{'
 expression_end: '}'
 # Number of assignments that results in a warning message
 warn_assignments: 10000
+# Path to the template file within the project
+template_path: "template.py"

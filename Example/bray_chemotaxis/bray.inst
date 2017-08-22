@@ -1,0 +1,142 @@
+/ Created by libAntimony v2.8.1
+model *Bray1995_chemotaxis_receptorlinkedcomplex()
+  
+  // Compartments and Species:
+  compartment cell;
+  species AA in cell, AAp in cell, W in cell, WAA in cell, WAAp in cell, WWAA in cell;
+  species WWAAp in cell, TT in cell, TTW in cell, TTWW in cell, TTWAA in cell;
+  species TTWAAp in cell, TTAA in cell, TTAAp in cell, TTWWAA in cell, TTWWAAp in cell;
+  species Y in cell, Yp in cell, Z in cell, B in cell, Bp in cell, SetYp in cell;
+
+  // Assignment Rules:
+  Bias := 1 - Yp^Hill/(2.333*SetYp^Hill + Yp^Hill);
+
+  {{ InstantiateTemplates Begin }}
+  # Instance 1: complex_r1: TTW -> TT + W; cell*(complex_r1_k1*TTW - complex_r1_k2*TT*W);
+  inst(template='TransformComplex', pfx='complex',  n=1,   m1='TT',     m2='W'                )
+  inst(                                             n=2,   m1='W',      m2='AA'               )
+  inst(                                             n=3,   m1='TT',     m2='WAA'              )
+  inst(                                             n=4,   m1='TTW',    m2='WAA'              )
+  inst(                                             n=5,   m1='TTWW',   m2='AA'               )
+  inst(                                             n=6,   m1='TT',     m2='WWAA'             )
+  inst(                                             n=7,   m1='TT',     m2='AA'               )
+  inst(                                             n=8,   m1='TTW',    m2='AA'               )
+  inst(                                             n=10,  m1='TTWW',   m2='W'                )
+  inst(                                             n=11,  m1='W',      m2='WAA'              )
+  inst(                                             n=9,   m1='TTWAA',  m2='W',   mf='TTWWAA' )
+  inst(                                             n=12,  m1='W',      m2='W',   mf='TTWAA'  )
+
+  # Phosphorylation
+  # Instance 1: phosphorylation_r1: TTWWAA => TTWWAAp; cell*phosphorylation_r1_k1*TTWWAA;
+  inst(template='AddMoiety', pfx='phosphorylation', n=1, m1='TTWWAA', m2='p')
+  inst(                                             n=2, m1='AA'            )
+  inst(                                             n=3, m1='WAA'           )
+  inst(                                             n=4, m1='WWAA'          )
+  inst(                                             n=5, m1='TTAA'          )
+  inst(                                             n=6, m1='TTWAA'         )
+  inst(                                             n=7, m1='Y'             )
+
+  # Dephosphorylation
+  # Instance: phosphorylation_r8: Yp => Y; cell*phosphorylation_r8_k1*TTWWAA;
+  inst(template='RemoveMoiety', pfx='phosphorylation', n=8, m1='Y', m2='p')
+  inst(                                                n=9, m1='B'        )
+
+  # Phosphotransfer
+  # Instance 1: phosphotransfer_r1: B + AAp => Bp + AA; cell*phosphotransfer_r1_k1*B*AAp;
+  inst(template='TransferMoiety', pfx='phosphotransfer', n=1,  m1='B', m2='AA', m3='p')
+  inst(                                                  n=2,          m2='WAA'       )
+  inst(                                                  n=3,          m2='WWAA'      )
+  inst(                                                  n=4,          m2='TTAA'      )
+  inst(                                                  n=5,          m2='TTWAA'     )
+  inst(                                                  n=6,          m2='TTWWAA'    )
+  inst(                                                  n=7,  m1='Y', m2='AA'        )
+  inst(                                                  n=8,          m2='WAA'       )
+  inst(                                                  n=9,          m2='WWAA'      )
+  inst(                                                  n=10          m2='TTAA'      )
+  inst(                                                  n=11,         m2='TTWAA'     )
+  inst(                                                  n=12,         m2='TTWWAA'    )
+  
+  {{ InstantiateTemplates End }}
+
+
+  // Species initializations:
+  AA = 2.5e-06;
+  AAp = 0;
+  W = 5e-06;
+  WAA = 0;
+  WAAp = 0;
+  WWAA = 0;
+  WWAAp = 0;
+  TT = 2.5e-06;
+  TTW = 0;
+  TTWW = 0;
+  TTWAA = 0;
+  TTWAAp = 0;
+  TTAA = 0;
+  TTAAp = 0;
+  TTWWAA = 0;
+  TTWWAAp = 0;
+  Y = 1e-05;
+  Yp = 0;
+  Z = 2e-05;
+  B = 2e-06;
+  Bp = 0;
+  SetYp = 1.63e-06;
+
+  // Compartment initializations:
+  cell = 1.41;
+
+
+  // Variable initializations:
+  Hill = 4;
+  Bias has dimensionless;
+
+  {{ TemplateInstance Begin }}
+  # Instance 1: complex_r1_k1 = 0.00365;
+  #             complex_r1_k1 has persec;
+  #             complex_r1_k2 = 1000000;
+  #             complex_r1_k2 has perMpersec;
+  inst(template='Constant2', pfx='complex', n=1,  k1v=0.00365, k1u='persec', k2v=1000000, k2u='perMpersec')
+  inst(                                     n=2,  k1v=0.00894                                             )
+  inst(                                     n=3,  k1v=297                                                 )
+  inst(                                     n=4,  k1v=0.64                                                )
+  inst(                                     n=5,  k1v=0.112                                               )
+  inst(                                     n=6,  k1v=0.022                                               )
+  inst(                                     n=7,  k1v=39.3                                                )
+  inst(                                     n=8,  k1v=727                                                 )
+  inst(                                     n=9,  k1v=7.87e-06                                            )
+  inst(                                     n=10, k1v=0.102                                               )
+  inst(                                     n=12, k1v=0.0676                                              )
+
+  # Instance 1: phosphorylation_r1_k1 = 15.5;
+  #             phosphorylation_r1_k1 has persec;
+  inst(template='Constant1', pfx='phosphoyrylation, n=1, k1v=15.5,   k1u='persec'    )
+  inst(                                             n=2, k1v=0.0227                  )
+  inst(                                             n=3                              )
+  inst(                                             n=4                              )
+  inst(                                             n=5                              )
+  inst(                                             n=6                              )
+  inst(                                             n=7, k1v=0.00124                 )
+  inst(                                             n=8, k1v=0.037                   )
+  inst(                                             n=10, k1v=0.35                   )
+  inst(                                             n=9, k1v=500000, k1u='perMpersec')
+
+  {{ TemplateInstance End }}
+  
+  phosphorylation_r9: Yp + Z => Y + Z; cell*phosphorylation_r9_k1*Yp*Z;
+
+  // Other declarations:
+  var Bias;
+  const cell, Hill;
+
+  // Unit definitions:
+  unit perMpersec = litre / (mole * second);
+  unit persec = 1 / second;
+  unit volume = 1e-15 litre;
+  unit M = mole / litre;
+  unit Mpersec = mole / (litre * second);
+
+  // Display Names:
+  volume is "femtolitre";
+  SetYp is "setYp";
+end
