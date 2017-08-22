@@ -137,6 +137,7 @@ J{s}{t}: S1{s}{t} -> S2{s}{t}; k1*S1{s}{t}'''  %  \
     dir_path = os.path.dirname(os.path.realpath(__file__))
     parent_path = os.path.dirname(dir_path)
     src_path = os.path.join(parent_path, "Example")
+    src_path = os.path.join(src_path, "Demo")
     src_path = os.path.join(src_path, "sample.tmpl")
     TemplateProcessor.processFile(src_path, "/tmp/out.mdl")
 
