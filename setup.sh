@@ -2,6 +2,7 @@
 # required to run the demo
 # Note that you must have conda (or miniconda) installed to 
 # run this script.
-conda install -c sys-bio tellurium
-conda install -c SBMLTeam python-libsbml
-pip install simpleyaml
+sudo pip3 install tellurium
+sudo pip3 install python-libsbml
+# Simple YAML
+sudo pip3 install dowright

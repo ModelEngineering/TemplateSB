@@ -4,8 +4,14 @@
    Output: Expanded Antimony model (stdout)
 """
 import fileinput
+import os
 import sys
-from TemplateSB.template_processor import TemplateProcessor
+
+directory = os.path.dirname(os.path.abspath(__file__))
+path = os.path.join(directory, "TemplateSB")
+sys.path.append(path)
+
+from template_processor import TemplateProcessor
 
 template_stg = ''
 for line in fileinput.input():

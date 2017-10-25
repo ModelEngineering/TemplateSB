@@ -97,7 +97,8 @@ One possible extension is to permit having a python expression inside a template
 
 The repository is organized as follows:
 
-*  The Code directory contains the python code and tests for the template preprocessor.
-*  The Examples directory contains an example of a template input and the output produced by TemplateSB.
-*  setup.py installs prerequisites for running TemplateSB.
-*  run.py is runs TemplateSB using stdin and stdout.
+-  The Code directory contains the python code and tests for the template preprocessor.
+-  The Examples directory contains an example of a template input and the output produced by TemplateSB.
+-  setup.py installs prerequisites for running TemplateSB.
+-  python3 run.py is runs TemplateSB using stdin and stdout.
+-  Examples/Demo contains a demo. Use bash python3 demo.sh

@@ -38,7 +38,7 @@ class TestSubtituter(unittest.TestCase):
     substitution_list = Expander.makeSubstitutionList({})
     self.assertEqual(len(substitution_list), 0)
     definitions = dict(DEFINITIONS)
-    key = DEFINITIONS.keys()[0]
+    key = list(DEFINITIONS.keys())[0]
     del definitions[key]
     substitution_list = Expander.makeSubstitutionList(definitions)
     expected = np.prod([len(v) for v in definitions.values()])
