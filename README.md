@@ -19,12 +19,20 @@ LT2pR -> LT3p + R; k2*LT2pR
 Note that the reactions are independent of phosphorylation and ligand binding in that the kinetics constants do not change with these receptor states. To represent the complete set of methylation reactions in the Spiro model, we’d consider methylation levels of 3 and 4 as well, resulting in 12 reactions.
 
 With TemplateSB, the complete set of 12 reactions can be expressed in a more compact way. 
-Templates provide a way to describe model elements using expressions.
-A template variable or expression is surrounded by curly braces (`{`, `}`).
-Consider the template variable `L`.
-Further, by default this variable has two expansions: `L` and "".
-The template variable `p` is handled in the same way.
-Thus, the above four reactions can be expressed as a single templated reaction:
+Templates provide a way to describe model elements using *template expressions*. 
+A template expression is either a template variable (which is
+defined in a manner described below) or a python expression consisting
+of template expressions. 
+A template expression is surrounded by curly braces (`{`, `}`).
+A *templated reaction* is a reaction
+with one or more template expressions.
+
+One templated reaction can expression all of the above
+non-templated reactions.
+This is done using two template variables, `L` and `p`.
+`L` has
+as two expansions: `L` and "";
+`p` has defined in the same way.
 
 <pre>
 {L}T2{p}R -> {L}T3{p} + R; k2*{L}T2{p}R
@@ -70,7 +78,7 @@ J3{L}2{p}: {L}T2{p}R -> {L}T3{p} + R; k32*{L}T2{p}R
 J3{L}3{p}: {L}T3{p}R -> {L}T4{p} + R; k33*{L}T3{p}R
 </pre>
 
-Here's an example using a template variable expression to describe an increase in methylation level.
+Here's an example using a template variable expression to describe an increase in methylation level. Note that the template expression has a python expression, `me+1`. In TemplateSB, a template expression can be an arbitrary python expression.
 
 <pre>
 {{ DefineVariables Begin }}
