@@ -1,4 +1,5 @@
 import tellurium as te
+import pylab
 
 INPUT = "sample.mdl"
 
@@ -16,3 +17,4 @@ result = rr.simulate (0, 10, 100)
 
 # Plot the results
 rr.plot (result)
+pylab.show()
