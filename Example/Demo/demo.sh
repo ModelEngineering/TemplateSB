@@ -1,4 +1,4 @@
 #!/bin/bash
-# Runs the demo
-python3 ../../run.py < sample.tmpl > sample.mdl
-python3 model.py
+# Runs the demo using the default python.
+python ../../run.py < sample.tmpl > sample.mdl
+python model.py
