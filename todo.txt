@@ -1,0 +1,2 @@
+1. Verify installs in python2 and python3 in clean VMs.
+2. Contact wildcard author
