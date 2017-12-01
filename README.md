@@ -1,4 +1,4 @@
-# TemplateSB
+# TemplateSB: A template processor for readable and reusableuse kinetics models for systems biology 
 TemplateSB is a template processor 
 for use in kinetics models for systems biology.
 The work was motivated by modeling in [Antimony](http://antimony.sourceforge.net/), a system for expression kinetics models in Tellurium.
