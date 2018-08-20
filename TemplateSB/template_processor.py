@@ -110,7 +110,7 @@ class TemplateProcessor(object):
       # SetVersion command
       elif self._command.isSetVersion():
         version = self._command.getArguments()[0]
-        if float(version) > VERSION:
+        if float(version) > float(VERSION):
           self._message.error("Unsupported version %s" % version)
         self._command = None
       # Other commands
